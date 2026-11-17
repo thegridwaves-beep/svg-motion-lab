@@ -235,7 +235,7 @@ def b15(t, D):
     haze = f'<rect x="-600" y="-600" width="2160" height="1800" fill="#FFA060" opacity="{0.25 * (1 - u):.2f}" filter="url(#b20)"/>'
     cam = (lerp(30, 110, u), lerp(110, 60, eio(u)), lerp(1.2, 1.0, eio(u)), lerp(4, -4, u))
     return SS(forest_layers(t, 440) + [(me + bear + haze, 1.0, False)], cam,
-              overlay=kmh_chip(480, 90, "~9 in 10", "CHARGES STOPPED BY SPRAY", ramp(t, 0.5, 0.8), edge="#5AE08A"))
+              overlay=kmh_chip(480, 90, "~9 in 10", "ENCOUNTERS STOPPED BY SPRAY", ramp(t, 0.5, 0.8), edge="#5AE08A"))
 
 
 # ================================================================== it depends on the bear
