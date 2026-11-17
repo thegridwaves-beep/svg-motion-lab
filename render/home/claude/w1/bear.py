@@ -124,7 +124,7 @@ def b06(t, D):
     me = boy(J, "b06", 480, 470, 0.62, L_FOREST, side=True, flip=True)
     cam = (0, -40 + kick(t, 0.12, 12, 0.2), lerp(1.2, 1.45, eo(ramp(t, 0, 0.3))), 0)
     return SS(forest_layers(t, 470) + [(pack_side(480, 470, 0.62, True) + me, 1.0, False)],
-              cam, overlay=red_x(480, 230, ramp(t, 0.1, 0.35), 1.5) + tag_big("DON'T", 480, 420, ramp(t, 0.12, 0.4), 84, "#FF4A4A"))
+              cam, overlay=red_x(480, 250, ramp(t, 0.1, 0.35), 1.5) + tag_big("DON'T", 480, 100, ramp(t, 0.12, 0.4), 84, "#FF4A4A"))
 
 
 @shot5(B["kmh"] - 0.1, "b07", "SIDE TRACKING at full speed: the grizzly gallops across the frame, the camera whips along beside it; a speed chip clocks ~55 km/h.")
@@ -183,7 +183,7 @@ def b11(t, D):
     rings = "".join(f'<circle cx="480" cy="230" r="{60 + 120 * ((t * 0.9 + k / 3) % 1):.1f}" fill="none" stroke="#9AE8FF" stroke-width="5" opacity="{0.5 * (1 - (t * 0.9 + k / 3) % 1):.2f}"/>' for k in range(3))
     bg = f'<g filter="url(#b10)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}</g>'
     cam = (lerp(10, -10, ramp(t, 0, D)), 0, lerp(1.0, 1.08, ramp(t, 0, D)), 0)
-    return SS([(bg, 0.3, True), (rings, 0.9, False), (me, 1.0, False)], cam, overlay=tag_big("TALK CALMLY", 480, 470, ramp(t, 0.1, 0.4), 50))
+    return SS([(bg, 0.3, True), (rings, 0.9, False), (me, 1.0, False)], cam)
 
 
 @shot5(B["spray_out"] - 0.1, "b12", "MACRO: a hand rips the bear spray off the belt, the camera tilts up with it and the yellow safety clip flicks off.")
@@ -247,8 +247,8 @@ def b16(t, D):
     freeze = ramp(t, 0.85, 1.0)
     bg = f'<g filter="url(#b8)">{forest_back(t)}{pine_row(300, 21, "#1E4A36", 14, 160, 260)}{trail_persp(300)}</g>'
     cam = (0, 40 + kick(t, 0.7, 18, 0.2), 1.3, lerp(0, -6, u))
-    return SS([(bg, 0.4, True), (bear, 1.0, False), (paw(lerp(520, 600, ei(u)), lerp(560, 330, ei(u)), lerp(0.4, 1.3, ei(u)), 15), 1.3, False)], cam,
-              overlay=flashw(hit) + f'<rect x="200" y="-150" width="560" height="840" fill="#FF2A3A" opacity="{0.35 * freeze:.2f}" style="mix-blend-mode:multiply"/>')
+    return SS([(bg, 0.4, True), (bear, 1.0, False), (paw(lerp(520, 600, ei(u)), lerp(560, 330, ei(u)), lerp(0.4, 1.3, ei(u)), 15), 1.3, False),
+               ui(flashw(hit) + f'<rect x="-600" y="-600" width="2160" height="1800" fill="#FF2A3A" opacity="{0.35 * freeze:.2f}" style="mix-blend-mode:multiply"/>')], cam)
 
 
 def stage(t):
@@ -277,8 +277,8 @@ def b18(t, D):
     wp = max(whip(t, 0.55, 0.12), whip(t, 1.1, 0.12), whip(t, 1.65, 0.12))
     cam = (x - CX + 30, 40, 1.45, 0)
     red = f'<rect x="-600" y="-600" width="2560" height="1800" fill="#FF1A2A" opacity="{0.3 * ramp(t, 0.6, 1.6):.2f}" style="mix-blend-mode:multiply"/>'
-    return SS([(stage(t), 0.4, True), (g_ + b_ + red, 1.0, False)], cam,
-              overlay=hstreaks(wp) + tag_big("DEADLY", 480, 470, ramp(t, 0.9, 1.2), 84, "#FF4A4A") + vign(0.35 * ramp(t, 0.5, 1.5), "#3A0000"), lights=())
+    return SS([(stage(t), 0.4, True), (g_ + b_ + red, 1.0, False), ui(hstreaks(wp) + vign(0.35 * ramp(t, 0.5, 1.5), "#3A0000"))], cam,
+              overlay=tag_big("DEADLY", 480, 100, ramp(t, 0.9, 1.2), 84, "#FF4A4A"), lights=())
 
 
 @shot5(B["griz"] - 0.1, "b19", "ORBIT around a roaring grizzly, the camera swinging under its chin. Badge: GRIZZLY.")
@@ -312,7 +312,7 @@ def b20(t, D):
                             kl=(-46, -100), fl=(-56, 0), kr=(46, -100), fr=(56, 0), face=fc(open=0.2))
         me = f'<g transform="translate(612 300) rotate(-90)">' + lit(back_pose(J), "b20", 0, 0, 0.5, L_FOREST) + '</g>'
     cam = (0, 0, lerp(1.1, 1.65, u), lerp(-40, 10, u))
-    return SS([(topdown(t), 1.0, True), (me, 1.0, False)], cam, overlay=tag_big("ON YOUR STOMACH", 480, 470, ramp(t, 0.25, 0.55), 36) if t < 1.1 else tag_big("HANDS ON NECK", 480, 470, ramp(t, 1.1, 1.4), 40))
+    return SS([(topdown(t), 1.0, True), (me, 1.0, False)], cam)
 
 
 @shot5(B["legs"] - 0.1, "b21", "OVERHEAD: his legs swing wide; a huge clawed paw shoves at his side and can't roll him over.")
@@ -323,7 +323,7 @@ def b21(t, D):
     pw = paw(480 + 20 * shove, lerp(-60, 120, clamp((t - 0.6) / 0.4)) + 20 * shove, 0.9, 180)
     arrows = "".join(f'<path d="M{640:.0f} {300 + 60 * k * sp:.0f} l30 {30 * k}" stroke="#FFE45A" stroke-width="10" stroke-linecap="round" opacity="{sp:.2f}"/>' for k in (-1, 1))
     cam = (0, 0, lerp(1.25, 1.4, ramp(t, 0, D)), 0)
-    return SS([(topdown(t), 1.0, True), (me + arrows, 1.0, False), (pw, 1.1, False)], cam, overlay=tag_big("LEGS WIDE", 480, 470, ramp(t, 0.15, 0.45), 52))
+    return SS([(topdown(t), 1.0, True), (me + arrows, 1.0, False), (pw, 1.1, False)], cam)
 
 
 @shot5(B["black"] - 0.1, "b22", "WHIP PAN: a black bear swings round to face us. Badge: BLACK BEAR.")
@@ -345,7 +345,7 @@ def b23(t, D):
     me = boy(J, "b23", 480, 560, 0.75, L_FOREST)
     cam = (0, 40, lerp(1.2, 1.35, ramp(t, 0, D)), lerp(6, -3, up))
     return SS([(forest_back(t), 0.2, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.45, True), (trail_persp(300), 0.8, True), (me + st, 1.0, False)], cam,
-              overlay=tag_big("FIGHT BACK", 480, 470, ramp(t, 0.15, 0.45), 60, "#FFE45A"))
+              overlay=tag_big("FIGHT BACK", 480, 90, ramp(t, 0.15, 0.45), 60, "#FFE45A"))
 
 
 @shot5(B["hit"] - 0.1, "b24", "IMPACT FRAMES: whack, whack, the branch cracks across the black bear's nose; it flinches and backs off.")
@@ -421,7 +421,7 @@ def b29(t, D):
     u = eio(ramp(t, 0, D))
     g_ = bear3d(480, 470, 0.95, lerp(-30, 10, u), t, "grizzly", fur=GRIZ_DARK, glow_hump=ramp(t, 0.3, 0.7))
     cam = (lerp(0, 32, u), lerp(110, 60, u), lerp(1.3, 1.75, u), lerp(-8, 4, u))
-    return SS(forest_layers(t, 470) + [(g_, 1.0, False)], cam, overlay=tag_big("THE HUMP", 480, 470, ramp(t, 0.3, 0.6), 66, "#FFE45A"))
+    return SS(forest_layers(t, 470) + [(g_, 1.0, False)], cam, overlay=tag_big("THE HUMP", 480, 90, ramp(t, 0.3, 0.6), 66, "#FFE45A"))
 
 
 @shot5(B["hump2"] - 0.1, "b30", "SILHOUETTE CHART: the grizzly outline in profile; its shoulder hump lights up gold with an arrow.")
@@ -447,7 +447,7 @@ def b31(t, D):
     bg = '<rect x="-600" y="-600" width="2160" height="1800" fill="#F4ECDC"/>'
     cam = (0, 60, lerp(1.0, 1.06, u), 0)
     return SS([(bg, 0.4, True), (g_ + b_, 1.0, False), (line_ + red_x(480 + 36 * 0.62, y_ - 30, ramp(t, 1.0, 1.25), 0.4), 1.0, False)], cam,
-              overlay=badge("BLACK BEAR: NO HUMP", ramp(t, 0.3, 0.6), "#3A3448", 480), lights=())
+              overlay=badge("BLACK BEAR: NO HUMP", ramp(t, 0.3, 0.6), "#3A3448", 240), lights=())
 
 
 @shot5(B["q"] - 0.1, "b32", "BACK ON THE TRAIL: over the boy's shoulder a bear steps out and stares; FLASH, it's the other kind. WHICH ONE? Loops to the start.")
