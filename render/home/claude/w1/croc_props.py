@@ -141,7 +141,11 @@ def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, wal
     # body: base, lit top band, pale belly
     FILL = TOP if sil else "url(#crocG)"
     closed = open_ <= 0.03
-    base, zb_ = loft(xs_body + (xs_head[1:] if closed else []), FILL)
+    if closed:
+        base, zb_ = loft(xs_body + xs_head[1:], FILL)
+    else:
+        tp = lambda x: (lambda cy, h, w: (cy, h * (1 - 0.75 * _sm(62, 80, x)), w * (1 - 0.6 * _sm(62, 80, x))))(*croc_profile(x))
+        base, zb_ = loft(xs_body + [68, 71, 74, 77, 80], FILL, tp)
     body = base
     # armour: two rows of raised scutes down the back, one crest down the tail
     sc = []
