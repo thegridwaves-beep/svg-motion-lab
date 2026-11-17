@@ -1,0 +1,104 @@
+name: render3d
+
+on:
+  workflow_dispatch:
+    inputs:
+      proj:
+        description: "project folder under scenes/"
+        default: "p1"
+      chunks:
+        description: "parallel jobs"
+        default: "16"
+      tend:
+        description: "duration (s)"
+        default: "15"
+      name:
+        description: "output name"
+        default: "clips"
+      qs:
+        description: "quality query"
+        default: "&res=0.8&aa=0&shadow=2048"
+      fps:
+        description: "fps"
+        default: "30"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.p.outputs.matrix }}
+    steps:
+      - id: p
+        run: |
+          N=${{ github.event.inputs.chunks }}
+          echo "matrix={\"chunk\":[$(seq -s, 0 $((N-1)))]}" >> "$GITHUB_OUTPUT"
+
+  render:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Setup
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+      - name: Render
+        working-directory: scenes/${{ github.event.inputs.proj }}
+        env:
+          SOFTWARE_GL: "1"
+          QS: ${{ github.event.inputs.qs }}
+          FPS: ${{ github.event.inputs.fps }}
+          CHROME: /usr/bin/google-chrome
+        run: |
+          set -e
+          read A B < <(python3 -c "
+          n=${{ github.event.inputs.chunks }}; i=${{ matrix.chunk }}; T=float('${{ github.event.inputs.tend }}'); f=int('${{ github.event.inputs.fps }}')
+          F=round(T*f); a=F*i//n; b=F*(i+1)//n; print(a/f, b/f)")
+          echo "chunk ${{ matrix.chunk }}: $A -> $B"
+          mkdir -p /tmp/out
+          node tools/capture.mjs video /tmp/out/part$(printf %03d ${{ matrix.chunk }}).mp4 $A $B
+      - uses: actions/upload-artifact@v4
+        with:
+          name: part-${{ matrix.chunk }}
+          path: /tmp/out/*.mp4
+          retention-days: 1
+
+  pack:
+    needs: render
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: part-*
+          merge-multiple: true
+          path: clips
+      - name: Encrypt and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          mkdir -p out
+          echo "::notice title=clips::$(ls clips | wc -l) clips"
+          tar -cf c.tar -C clips .
+          openssl rand -hex 32 > k.txt
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in c.tar -out out/${{ github.event.inputs.name }}.bin -pass file:k.txt
+          openssl pkeyutl -encrypt -pubin -inkey render/pub.pem -in k.txt -out out/${{ github.event.inputs.name }}.key
+          rm -f k.txt c.tar
+          gh release create "r-${{ github.run_number }}" out/* -R "${{ github.repository }}" --title "r-${{ github.run_number }}" --notes "run ${{ github.run_id }}"
+      - name: Remove raw parts
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for id in $(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].id'); do gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id"; done
