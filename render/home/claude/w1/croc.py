@@ -228,7 +228,9 @@ def c14(t, D):
     jab = clamp(1 - abs(t - 0.35) / 0.3)
     cr = croc3d(420, 400, 2.2, -150, t, open_=0.0, sway=0.2, blink=1.0 if t > 0.38 else 0.0)
     ex, ey = 420 + (82 * math.cos(math.radians(-150)) - 12 * math.sin(math.radians(-150))) * 2.2, 400 - 46 * 2.2
-    fist = hand_grip(lerp(ex + 230, ex + 30, jab), lerp(ey + 120, ey + 10, jab), 1.2)
+    fx, fy = lerp(ex + 230, ex + 26, jab), lerp(ey + 120, ey + 8, jab)
+    fist = (f'<g transform="translate({fx:.0f} {fy:.0f}) rotate(-25)"><rect x="-6" y="-26" width="140" height="52" rx="22" fill="#B8784E"/>'
+            '<rect x="-34" y="-34" width="64" height="68" rx="26" fill="#C8885E"/>' + "".join(f'<path d="M-30 {-20 + 13 * k} q-8 6 0 12" stroke="#8A5034" stroke-width="3" fill="none"/>' for k in range(3)) + '</g>')
     cam = (ex - CX + 40, ey - CY + 40 + kick(t, 0.35, 12), 2.0, 0)
     return SS([(f'<g filter="url(#b8)">{river_back()}{water_back(330)}</g>', 0.4, True), (cr, 1.0, False), (water_front(t, 420, 0.45), 1.0, False), (fist, 1.0, False),
                ui(impact_star(480, 250, clamp((t - 0.35) / 0.3), 0.6) if t > 0.35 else "")], cam)
@@ -359,18 +361,19 @@ def c26(t, D):
     return SS(river(t, 520) + [(me, 1.0, False), (water_front(t, WY, 0.25), 1.0, False), ui(hstreaks(wp))], cam)
 
 
-@shot5(B[(9, 1)] - 0.1, "c27", "OVERHEAD: the boy takes three big steps back from the water; a red DANGER strip glows along the edge.")
+@shot5(B[(9, 1)] - 0.1, "c27", "SIDE, WIDE: a red DANGER strip glows along the edge of the bank; the boy takes three big steps back out of it, eyes on the water.")
 def c27(t, D):
     u = ramp(t, 0, D)
-    step = eo(clamp(u * 1.4))
-    bx, by = lerp(470, 300, step), 300
-    sw = 6 * math.sin(t * 9) * (1 - step)
-    me = (f'<g transform="translate({bx:.0f} {by}) rotate({90 + sw:.1f}) scale(1.7)"><ellipse cx="0" cy="0" rx="40" ry="20" fill="#2EA0B0"/><ellipse cx="-38" cy="0" rx="10" ry="12" fill="#2EA0B0"/><ellipse cx="38" cy="0" rx="10" ry="12" fill="#2EA0B0"/>'
-          '<circle cx="0" cy="0" r="22" fill="#3A2A3A"/><path d="M-14 -12 Q0 -26 14 -12" stroke="#4A3646" stroke-width="6" fill="none"/></g>')
-    strip = f'<path d="M520 -800 Q480 300 560 1400" stroke="#FF3A4A" stroke-width="110" fill="none" opacity="{0.35 * ramp(t, 0.3, 0.8):.2f}"/>'
-    prints = "".join(f'<ellipse cx="{lerp(470, 320, k / 3):.0f}" cy="{300 + (14 if k % 2 else -14)}" rx="12" ry="7" fill="#5A4024" opacity="{0.6 * ramp(t, 0.3 * k, 0.3 * k + 0.2):.2f}"/>' for k in range(4))
-    cam = (-60, 0, lerp(1.1, 1.25, u), lerp(-6, 6, u))
-    return SS([(topdown_river(t), 1.0, True), (strip + prints + me, 1.0, False)], cam, overlay=badge("DANGER ZONE", ramp(t, 0.5, 0.8), "#C83A4A", 90))
+    step = eo(clamp(u * 1.3))
+    bx = lerp(450, 300, step)
+    J = walk_J((1 - (t * 0.9) % 1) if step < 0.98 else 0.0, face=fc(open=1.1, look=(1, 0.3)))
+    me = boy(J, "c27", bx, 392, 0.42, L_RIVER, side=True)
+    strip = f'<path d="M370 390 L520 390 Q545 400 560 452 L470 452 Q440 400 370 400 Z" fill="#FF3A4A" opacity="{0.45 * ramp(t, 0.2, 0.6):.2f}"/>'
+    prints = "".join(f'<ellipse cx="{lerp(445, 310, k / 3):.0f}" cy="393" rx="10" ry="3" fill="#5A4024" opacity="{0.7 * ramp(t, 0.35 * k, 0.35 * k + 0.2):.2f}"/>' for k in range(4))
+    cam = (-60, 0, lerp(1.2, 1.28, u), 0)
+    return SS(river(t, 470) + [(strip + prints + me, 1.0, False), (water_front(t, WY, 0.3), 1.0, False)], cam,
+              overlay=badge("DANGER ZONE", ramp(t, 0.4, 0.7), "#C83A4A", 40))
+
 
 @shot5(B[(9, 2)] - 0.1, "c28", "WATER LEVEL: two eyes surface right at the edge... the croc lunges and snaps on empty air. He's out of reach.")
 def c28(t, D):
@@ -382,14 +385,15 @@ def c28(t, D):
     return SS(river(t, 470) + [(me, 1.0, False), (cr, 1.0, False), (water_front(t, WY, 0.6) + splash(560, WY, clamp((t - 0.9) * 1.5) if t > 0.9 else 0, 0.6), 1.0, False)], cam)
 
 
-@shot5(B[(10, 0)] - 0.1, "c29", "SPLIT CHOICE: a huge croc eye on top, the glowing throat flap below, a white slash between them.")
+@shot5(B[(10, 0)] - 0.1, "c29", "SPLIT CHOICE: a huge croc eye glowing on top, the throat flap glowing below, a white slash between them.")
 def c29(t, D):
-    top = croc3d(560, 330, 2.8, -150, t, open_=0.0, sway=0.2, eye_glow=ramp(t, 0.5, 1.0))
-    m = mouth_inside(480, 470, 0.5, 0.0, ramp(t, 1.5, 2.0), 0.0, t)
-    clip = '<clipPath id="c29top"><rect x="200" y="-200" width="560" height="470"/></clipPath>'
-    sl = '<path d="M200 300 L760 240" stroke="#FFFFFF" stroke-width="10"/>'
-    return SS([(stage(t), 0.4, True), (clip + f'<g clip-path="url(#c29top)">{top}</g>' + m + sl, 1.0, False)], (0, 40, 1.0, 0), lights=(),
-              overlay=tag_big("EYES?", 480, 40, ramp(t, 0.6, 0.9), 54, "#FFE45A") + tag_big("THROAT FLAP?", 480, 470, ramp(t, 1.5, 1.8), 44, "#FFE45A"))
+    top = croc3d(560, 250, 2.8, -150, t, open_=0.0, sway=0.2, eye_glow=ramp(t, 0.5, 1.0))
+    m = mouth_inside(480, 285, 0.36, 0.0, ramp(t, 1.5, 2.0), 0.0, t)
+    clip = '<clipPath id="c29top"><rect x="200" y="-200" width="560" height="380"/></clipPath>'
+    sl = '<path d="M200 190 L760 160" stroke="#FFFFFF" stroke-width="10"/>'
+    return SS([(stage(t), 0.4, True), (clip + f'<g clip-path="url(#c29top)">{top}</g>' + m + sl, 1.0, False)], (0, 0, 1.0, 0), lights=(),
+              overlay=tag_big("EYES?", 480, 40, ramp(t, 0.6, 0.9), 54, "#FFE45A") + tag_big("THROAT FLAP?", 480, 205, ramp(t, 1.5, 1.8), 40, "#FFE45A"))
+
 
 @shot5(B[(10, 2)] - 0.1, "c30", "BACK TO THE START: the boy kneels at the river's edge again... two eyes rise behind the bottle. Loops.")
 def c30(t, D):
