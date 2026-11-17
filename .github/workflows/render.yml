@@ -1,0 +1,108 @@
+name: render
+
+on:
+  workflow_dispatch:
+    inputs:
+      chunks:
+        description: "parallel jobs"
+        default: "18"
+      name:
+        description: "output name"
+        default: "clips"
+      anim_mod:
+        description: "module"
+        default: ""
+      tend:
+        description: "end time (s)"
+        default: "60"
+      only:
+        description: "optional: only these shot names (space separated)"
+        default: ""
+      vert:
+        description: "1 = portrait"
+        default: "1"
+      extra_mods:
+        description: "optional extra modules, comma separated"
+        default: ""
+
+permissions:
+  contents: write
+  actions: write
+
+env:
+  ANIM_MOD: ${{ github.event.inputs.anim_mod }}
+  TEND: ${{ github.event.inputs.tend }}
+  VERT: ${{ github.event.inputs.vert }}
+  EXTRA_MODS: ${{ github.event.inputs.extra_mods }}
+  PLAYWRIGHT_BROWSERS_PATH: /opt/ms-playwright
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.p.outputs.matrix }}
+    steps:
+      - id: p
+        run: |
+          N=${{ github.event.inputs.chunks }}
+          echo "matrix={\"chunk\":[$(seq -s, 0 $((N-1)))]}" >> "$GITHUB_OUTPUT"
+
+  render:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core > /dev/null
+          sudo mkdir -p /home/claude /root/.fonts
+          sudo cp -r render/home/claude/* /home/claude/
+          sudo cp render/fonts/*.ttf /root/.fonts/
+          sudo chmod -R a+rwx /home/claude
+          sudo python3 -m pip install -q --break-system-packages playwright pillow numpy scipy
+          sudo env "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" python3 -m playwright install --with-deps chromium > /dev/null
+      - name: Render
+        run: |
+          set -o pipefail
+          sudo env "ANIM_MOD=$ANIM_MOD" "TEND=$TEND" "VERT=$VERT" "EXTRA_MODS=$EXTRA_MODS" "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" python3 render/ci_render.py run ${{ matrix.chunk }} ${{ github.event.inputs.chunks }} 2 ${{ github.event.inputs.only }} 2>&1 | tee /tmp/render.log || {
+            echo "::error title=chunk-${{ matrix.chunk }}::$(grep -E 'Error|FAIL|Traceback|line [0-9]+' /tmp/render.log | tail -12 | tr '\n' '|' | cut -c1-1800)"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: part-${{ matrix.chunk }}
+          path: /home/claude/ep/shots5/*.mp4
+          retention-days: 1
+
+  pack:
+    needs: render
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: part-*
+          merge-multiple: true
+          path: clips
+      - name: Encrypt and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          mkdir -p out
+          echo "::notice title=clips::$(ls clips | wc -l) clips"
+          tar -cf c.tar -C clips .
+          openssl rand -hex 32 > k.txt
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in c.tar -out out/${{ github.event.inputs.name }}.bin -pass file:k.txt
+          openssl pkeyutl -encrypt -pubin -inkey render/pub.pem -in k.txt -out out/${{ github.event.inputs.name }}.key
+          rm -f k.txt c.tar
+          gh release create "r-${{ github.run_number }}" out/* -R "${{ github.repository }}" --title "r-${{ github.run_number }}" --notes "run ${{ github.run_id }}"
+      - name: Remove raw parts
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for id in $(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].id'); do gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id"; done
