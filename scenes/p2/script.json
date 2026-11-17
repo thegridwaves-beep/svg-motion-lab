@@ -1,0 +1,37 @@
+{
+ "title": "scene",
+ "voice": "v1",
+ "speed": 1.0,
+ "music": "tension",
+ "sources": [
+  "NPS: grizzly bears can run about 35 mph (56 km/h); do not run from a bear, it can trigger a chase",
+  "Usain Bolt peak speed ~44.7 km/h (2009 Berlin 100 m)"
+ ],
+ "lines": [
+  {
+   "text": "You're hiking alone..."
+  },
+  {
+   "text": "and a bear steps onto the trail."
+  },
+  {
+   "text": "It sees you."
+  },
+  {
+   "text": "And it charges."
+  },
+  {
+   "text": "Your brain screams run."
+  },
+  {
+   "text": "Don't."
+  },
+  {
+   "text": "A bear can hit around fifty five kilometres an hour,",
+   "caps": "A bear | can hit | around | 55 | km/h,"
+  },
+  {
+   "text": "faster than any human alive."
+  }
+ ]
+}
