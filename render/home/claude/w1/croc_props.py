@@ -10,152 +10,208 @@ L_RIVER = Light("crDay", amb=(1.0, 0.97, 0.9), sat=1.0, key="#FFE2A8", key_op=0.
 L_UNDER = Light("crUnder", amb=(0.6, 0.85, 0.9), sat=0.8, key="#9AF0E8", key_op=0.3, ang=-80, spread=0.9, shade="#02141A", shade_op=0.5, rim="#B8FFF4", rim_op=0.5, rim_w=6)
 SHADE = "#071008"
 TAU = 2 * math.pi
+CROC_DEFS = ('<linearGradient id="crocG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86995A"/><stop offset="0.35" stop-color="#66793E"/>'
+             '<stop offset="0.62" stop-color="#4E6230"/><stop offset="0.74" stop-color="#5E6E3A"/><stop offset="0.8" stop-color="#C9C38C"/><stop offset="1" stop-color="#B2AA74"/></linearGradient>')
 CROC = ("#56693A", "#2F3D22", "#CFCB92", "#3C4C2A")      # top, dark, belly, scutes
 WATER_Y = 430
 
 
 # ------------------------------------------------------------------ 3D crocodile
+def _hull(pts):
+    pts = sorted(set(pts))
+    if len(pts) < 3:
+        return pts
+    def cr(o, a, b): return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lo, up = [], []
+    for p in pts:
+        while len(lo) >= 2 and cr(lo[-2], lo[-1], p) <= 0: lo.pop()
+        lo.append(p)
+    for p in reversed(pts):
+        while len(up) >= 2 and cr(up[-2], up[-1], p) <= 0: up.pop()
+        up.append(p)
+    return lo[:-1] + up[:-1]
+
+
+def _sm(a, b, x):
+    u = clamp((x - a) / (b - a)); return u * u * (3 - 2 * u)
+
+
+def croc_profile(x):
+    """Cross-section at x: (centre y, half height, half width). Snout +x, belly on y=0."""
+    if x < -40:                                            # tail: tall and flattened sideways
+        u = (-40 - x) / 190.0
+        return -21 + 6 * u, lerp(21, 4, u ** 0.8), lerp(26, 2.5, u ** 0.7)
+    if x < 44:                                             # body: wide, low, armoured
+        b = 1 - 0.18 * (1 - _sm(-40, -10, x)) - 0.22 * _sm(20, 44, x)
+        return -26, 25 * b, 46 * b
+    if x < 66:                                             # neck
+        return -27, lerp(20, 17, _sm(44, 66, x)), lerp(36, 31, _sm(44, 66, x))
+    if x < 96:                                             # skull, broad and flat
+        return -28, lerp(17, 13, _sm(66, 96, x)), lerp(31, 24, _sm(66, 96, x))
+    u = (x - 96) / 56.0                                    # snout tapering to a rounded tip
+    tip = max(0.0, 1 - max(0.0, (u - 0.85) / 0.15) ** 2) ** 0.5
+    return -26 + 2 * u, lerp(13, 8, u) * max(tip, 0.25), lerp(24, 11, u) * max(tip, 0.2)
+
+
 def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, walk=0.0, blink=0.0, persp=0.0, small=False, eye_glow=0.0, sil=None, pitch=0.0, anchor=None):
-    """Model: snout at +x, ~370 units snout to tail at s=1, belly on y=0 (oy = belly line), z toward the viewer's left.
-    yaw 0 = side view facing right, -90 = head-on toward the camera. open_ = jaw angle 0..1 (~45 deg).
-    roll = body roll in degrees around its long axis (the death roll)."""
+    """Saltwater crocodile as one smooth lofted body (cross-sections joined by hulls), seen from any yaw.
+    Snout at +x, ~380 units long at s=1, belly on y=0 (oy), z toward the viewer's left. yaw 0 = side view facing right,
+    -90 = head-on. open_ 0..1 jaw gape, roll = death-roll angle (deg), pitch = head-up tilt (deg), anchor = put the jaw tip there."""
     yaw = math.radians(yaw_deg); c, si = math.cos(yaw), math.sin(yaw)
-    rr = math.radians(roll); cr, sr = math.cos(rr), math.sin(rr)
-    top, dark, belly, scute = CROC
-    if sil:
-        top = dark = belly = scute = sil
-    items = []
-    AX = -18.0          # roll axis height
-
-    def K(Z):
-        return 1.0 / max(0.25, 1 + persp * Z)
-
+    rr = math.radians(roll); cr_, sr_ = math.cos(rr), math.sin(rr)
     pr = math.radians(pitch); cp, sp = math.cos(pr), math.sin(pr)
+    TOP, DARK, BELLY, SCUTE = CROC
+    LITE = "#73884A"
+    if sil:
+        TOP = DARK = BELLY = SCUTE = LITE = sil
+    AX = -26.0
+    ga = math.radians(42 * open_)
+
+    def swz(x):
+        if x > -40: return 0.0
+        u = (-40 - x) / 190.0
+        return sway * 46 * u * u * math.sin(t * 3.0 - u * 3.2)
+
+    def jaw(p, part):
+        """part +1 = upper jaw (lifts), -1 = lower jaw (drops); hinge at (66, AX)."""
+        x, y, z = p
+        if part == 0 or x < 66: return p
+        a = -ga * 0.35 if part > 0 else ga * 0.8
+        dx, dy = x - 66, y - AX
+        return (66 + dx * math.cos(a) - dy * math.sin(a), AX + dx * math.sin(a) + dy * math.cos(a), z)
 
     def R(p):
         x, y, z = p
         y0 = y - AX
-        x, y, z = x, AX + y0 * cr - z * sr, y0 * sr + z * cr
-        if pitch:                                        # head up around a pivot behind the shoulders
+        x, y, z = x, AX + y0 * cr_ - z * sr_, y0 * sr_ + z * cr_
+        if pitch:
             dx, dy = x + 40, y + 10
             x, y = -40 + dx * cp + dy * sp, -10 - dx * sp + dy * cp
         return x, y, z
 
-    if anchor is not None:                               # place the jaw tip exactly on anchor (e.g. the boy's hand)
-        tx, ty, tz = R((140, -18, 0))
+    def K(Z): return 1.0 / max(0.25, 1 + persp * Z)
+
+    if anchor is not None:
+        tx, ty, tz = R((148, -26, 0))
         ox = anchor[0] - (tx * c - tz * si) * s
         oy = anchor[1] - ty * s
 
     def P(p):
         x, y, z = R(p)
         Z = x * si + z * c; k = K(Z)
-        return ox + (x * c - z * si) * s * k, oy + (-20 + (y + 20) * k) * s, Z
+        return (ox + (x * c - z * si) * s * k, oy + (-20 + (y + 20) * k) * s, Z)
 
-    def dk(Z):
-        return 0.0 if sil else max(0.0, min(0.5, Z / 200.0 * 0.45))
+    def ring(x, cy, h, w, zc, part=0, n=14):
+        out = []
+        for k in range(n):
+            th = TAU * k / n
+            out.append(P(jaw((x, cy + h * math.cos(th), zc + w * math.sin(th)), part)))
+        return out
 
-    def ell(p, rx, ry, rz, col, hl=0.1, zb=0.0, op=1.0):
-        X, Y, Z = P(p); k = K(Z)
-        ry2 = math.sqrt((ry * cr) ** 2 + (rz * sr) ** 2); rz2 = math.sqrt((ry * sr) ** 2 + (rz * cr) ** 2)
-        prx = math.sqrt((rx * c) ** 2 + (rz2 * si) ** 2) * k * s; pry = ry2 * k * s
-        o = f'<ellipse cx="{X:.1f}" cy="{Y:.1f}" rx="{prx:.1f}" ry="{pry:.1f}" fill="{mixc(col, SHADE, dk(Z))}" opacity="{op:.2f}"/>'
-        if hl > 0 and not sil:
-            o += f'<ellipse cx="{X - 0.15 * prx:.1f}" cy="{Y - 0.45 * pry:.1f}" rx="{0.6 * prx:.1f}" ry="{0.25 * pry:.1f}" fill="#F4FFE0" opacity="{hl:.2f}" filter="url(#b3)"/>'
-        items.append((Z + zb, o))
+    def loft(xs, col, f=lambda x: croc_profile(x), part=0):
+        o = []; prev = None; zs = []
+        for x in xs:
+            cy, h, w = f(x)
+            r = ring(x, cy, h, w, swz(x), part)
+            if prev:
+                hp = _hull([(round(a, 1), round(b, 1)) for a, b, _ in prev + r])
+                o.append("M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in hp) + "Z")
+            prev = r; zs.append(sum(z for *_, z in r) / len(r))
+        return f'<path d="{" ".join(o)}" fill="{col}"/>', sum(zs) / max(1, len(zs))
 
-    def line(pts, col, w, op=1.0, zb=0.0, cap="round"):
-        q = [P(p) for p in pts]; Z = sum(z for *_, z in q) / len(q)
-        items.append((Z + zb, f'<path d="M{" L".join(f"{x:.1f} {y:.1f}" for x, y, _ in q)}" stroke="{mixc(col, SHADE, dk(Z))}" stroke-width="{w * s * K(Z):.1f}" fill="none" stroke-linecap="{cap}" stroke-linejoin="round" opacity="{op:.2f}"/>'))
+    def seg(p0, p1, w, col):
+        a, b = P(p0), P(p1)
+        return f'<path d="M{a[0]:.1f} {a[1]:.1f} L{b[0]:.1f} {b[1]:.1f}" stroke="{col}" stroke-width="{w * s:.1f}" stroke-linecap="round"/>', (a[2] + b[2]) / 2
 
-    def poly(pts, col, op=1.0, zb=0.0):
-        q = [P(p) for p in pts]; Z = sum(z for *_, z in q) / len(q)
-        items.append((Z + zb, f'<path d="M{" L".join(f"{x:.1f} {y:.1f}" for x, y, _ in q)} Z" fill="{mixc(col, SHADE, dk(Z))}" opacity="{op:.2f}"/>'))
-
-    def swz(x):
-        """Tail sway: z offset growing toward the tail tip."""
-        if x > -40:
-            return 0.0
-        u = (-40 - x) / 180.0
-        return sway * 40 * u * u * math.sin(t * 3.0 - u * 3.0)
-
-    # ---- tail
-    n = 11
-    for k in range(n):
-        u = k / (n - 1)
-        x = -40 - 190 * u; r = lerp(25, 4, u)
-        ell((x, -18 + 6 * u, swz(x)), 17, r * 1.05, r * 1.15, top, 0.08 if k % 2 == 0 else 0.0)
-        if k < n - 1:
-            for zz in ((-1, 1) if u < 0.45 else (0,)):
-                zo = zz * r * 0.45
-                poly([(x - 6, -16 + 4 * u - r * 0.8, swz(x) + zo), (x, -16 + 4 * u - r * 0.8 - (8 - 5 * u), swz(x) + zo), (x + 6, -16 + 4 * u - r * 0.8, swz(x) + zo)], scute, zb=-0.3)
-    # ---- body
-    for x, rx, ry, rz in ((-30, 36, 27, 42), (0, 38, 28, 44), (30, 34, 26, 40)):
-        ell((x, -24, 0), rx, ry, rz, top, 0.12)
-        ell((x, -6, 0), rx * 0.9, 9, rz * 0.9, belly, 0.0, zb=0.5)
-    for x in range(-50, 50, 12):                           # back armour rows
-        for zz in (-12, 0, 12):
-            poly([(x - 4, -48, zz), (x, -56, zz), (x + 4, -48, zz)], scute, zb=-0.5)
-    # ---- legs
+    xs_body = [x for x in range(-230, 67, 5)]
+    xs_head = [66 + 3 * k for k in range(29)]               # 66..150
+    layers = []                                              # (depth, svg)
+    # legs (thick capsules); far ones go behind the body, near ones in front
     for front in (True, False):
         for side in (-1, 1):
-            hx = 32 if front else -36
+            hx = 30 if front else -32
             ph = TAU * walk + (0 if front else math.pi) + (0 if side > 0 else math.pi)
-            fx = hx + (10 if front else 4) + 18 * math.sin(ph) * (1 if walk else 0)
-            lift = max(0.0, math.cos(ph)) * 10 * (1 if walk else 0)
-            hip = (hx, -14, side * 26); knee = (hx + 2, -6 - lift * 0.5, side * 46); foot = (fx, -lift, side * 50)
-            line([hip, knee], top, 13, zb=1.0); line([knee, foot], top, 10, zb=1.0)
-            for k in range(4):
-                line([foot, (foot[0] + 8 + 3 * k * (1 if front else -1) * 0.5, foot[1] + 1, foot[2] + side * (k - 1.5) * 4)], dark, 3, zb=0.9)
-    # ---- neck + head
-    ell((56, -24, 0), 26, 22, 32, top, 0.1)
-    ell((78, -26, 0), 24, 17, 28, top, 0.14)
-    # eyes on raised bumps
-    for side in (-1, 1):
-        ell((76, -38, side * 11), 7, 6, 6, top, 0.0, zb=-0.6)
-        X, Y, Z = P((79, -42, side * 11)); k = K(Z) * s
-        if blink > 0.5:
-            items.append((Z - 0.8, f'<path d="M{X - 4.5 * k:.1f} {Y:.1f} L{X + 4.5 * k:.1f} {Y:.1f}" stroke="#1A2410" stroke-width="{2 * k:.1f}"/>'))
-        else:
-            gl = glow(X, Y, 14 * k, "#FFE04A", 0.5 * eye_glow, 4) if eye_glow > 0 else ""
-            items.append((Z - 0.8, gl + f'<ellipse cx="{X:.1f}" cy="{Y:.1f}" rx="{4.6 * k:.1f}" ry="{4.2 * k:.1f}" fill="#E8C83A"/>'
-                                   f'<ellipse cx="{X:.1f}" cy="{Y:.1f}" rx="{1.0 * k:.1f}" ry="{3.6 * k:.1f}" fill="#120A04"/>'
-                                   f'<circle cx="{X - 1.5 * k:.1f}" cy="{Y - 1.6 * k:.1f}" r="{1.1 * k:.1f}" fill="#FFFFFF" opacity="0.85"/>'))
-    # ---- jaws: rotate around the hinge (64, -16) in the x-y plane
-    ang = math.radians(55 * open_)
-    hxj, hyj = 64.0, -18.0
-
-    def jaw(p, sgn):
-        x, y, z = p
-        a = ang * (0.45 if sgn < 0 else 0.75) * sgn       # upper lifts a little, lower drops more
-        dx, dy = x - hxj, y - hyj
-        return (hxj + dx * math.cos(a) - dy * math.sin(a), hyj + dx * math.sin(a) + dy * math.cos(a), z)
-
-    L_ = 150 if not small else 140
-    up = [(92, -24, 22, 9, 18), (116, -23, 20, 8, 13), (138, -22, 14, 7, 10)]
-    for x, y, rx, ry, rz in up:
-        ell(jaw((x, y, 0), -1), rx, ry, rz, top, 0.12, zb=-0.2)
-    ell(jaw((L_, -27, 0), -1), 7, 5, 7, top, 0.0, zb=-0.25)               # nostril knob
-    for side in (-1, 1):
-        X, Y, Z = P(jaw((L_ + 2, -31, side * 3), -1))
-        items.append((Z - 0.3, f'<circle cx="{X:.1f}" cy="{Y:.1f}" r="{1.4 * s:.1f}" fill="#1A2010"/>'))
-    for x, y, rx, ry, rz in ((92, -12, 21, 6, 17), (116, -12, 19, 5, 12), (138, -13, 13, 5, 9)):
-        ell(jaw((x, y, 0), 1), rx, ry, rz, belly if open_ > 0.05 else top, 0.0, zb=-0.15)
-    # mouth inside + teeth
+            fx = hx + (12 if front else 2) + (16 * math.sin(ph) if walk else 0)
+            lift = max(0.0, math.cos(ph)) * 10 if walk else 0
+            hip = (hx, -20, side * 34); knee = (hx + 2, -10 - lift * 0.5, side * 56); foot = (fx, -lift, side * 60)
+            a, za = seg(hip, knee, 20 if not front else 17, TOP)
+            b, zb = seg(knee, foot, 15 if not front else 13, TOP)
+            toes = "".join(seg(foot, (foot[0] + (9 if front else -9) * math.cos(q), foot[1] + 1, foot[2] + side * 9 * math.sin(q) + side * 2), 4, DARK)[0] for q in (-0.6, 0, 0.6, 1.2))
+            layers.append((za, a + b + toes))
+    # body: base, lit top band, pale belly
+    FILL = TOP if sil else "url(#crocG)"
+    closed = open_ <= 0.03
+    base, zb_ = loft(xs_body + (xs_head[1:] if closed else []), FILL)
+    body = base
+    # armour: two rows of raised scutes down the back, one crest down the tail
+    sc = []
+    for x in range(-200, 50, 9):
+        cy, h, w = croc_profile(x)
+        rows = (-0.32, 0.32) if x > -110 else (0.0,)
+        for rz in rows:
+            zc = swz(x) + rz * w
+            p0, p1, p2 = P((x - 3.5, cy - h * 0.92, zc)), P((x, cy - h - (6 if x > -110 else 5), zc)), P((x + 3.5, cy - h * 0.92, zc))
+            sc.append(f'<path d="M{p0[0]:.1f} {p0[1]:.1f} L{p1[0]:.1f} {p1[1]:.1f} L{p2[0]:.1f} {p2[1]:.1f} Z" fill="{SCUTE}"/>')
+    body += "".join(sc)
+    # head: closed = one loft; open = upper + lower jaw lofts with the pink mouth between
     if open_ > 0.03:
-        ins = [jaw((66, -17, 0), -1), jaw((146, -18, 0), -1), jaw((146, -16, 0), 1), jaw((66, -15, 0), 1)]
-        poly(ins, "#C8586A", zb=0.6)
-        poly([jaw((70, -17, 0), -1), jaw((80, -18, 0), -1), jaw((80, -14, 0), 1), jaw((70, -15, 0), 1)], "#7A2A3A", zb=0.55)
+        up_f = lambda x: (lambda cy, h, w: (cy - 0.45 * h, 0.6 * h, w))(*croc_profile(x))
+        lo_f = lambda x: (lambda cy, h, w: (cy + 0.55 * h, 0.45 * h, 0.94 * w))(*croc_profile(x))
+        mouth = [P(jaw((66, AX, 0), 1)), P(jaw((146, AX - 2, 0), 1)), P(jaw((146, AX + 2, 0), -1)), P(jaw((66, AX, 0), -1))]
+        inside = f'<path d="M{" L".join(f"{a:.1f} {b:.1f}" for a, b, _ in mouth)} Z" fill="#B84A5C"/>'
+        lo, _ = loft(xs_head, BELLY if not sil else TOP, lo_f, -1); upj, _ = loft(xs_head, FILL, up_f, 1)
+        head = lo + inside + upj
+    else:
+        head = ""
+    # teeth and the jaw line on the side facing the camera
+    near = 1 if (c * 0 + (-si) * 0 + 1) and (math.cos(yaw) * 0 + math.sin(yaw) * 0) == 0 else 1
+    zside = 1 if (0 * si + 1 * c) < 0 else -1               # z side nearer the camera
+    if roll and abs(((roll + 90) % 360) - 180) < 90:
+        zside = -zside
+    det = []
+    jl = []
+    for x in range(68, 148, 3):
+        cy, h, w = croc_profile(x)
+        jl.append(P(jaw((x, cy + 1, zside * w * 0.97), 1 if open_ > 0.03 else 0)))
+    det.append(f'<path d="M{" L".join(f"{a:.1f} {b:.1f}" for a, b, _ in jl)}" stroke="{DARK}" stroke-width="{2.2 * s:.1f}" fill="none" stroke-linecap="round"/>')
+    for k, x in enumerate(range(74, 146, 6)):
+        cy, h, w = croc_profile(x)
+        z0 = zside * w * 0.96
+        if open_ > 0.03:
+            a0 = P(jaw((x, cy + 1, z0), 1)); a1 = P(jaw((x + 1.5, cy + 6, z0), 1))
+            b0 = P(jaw((x + 3, cy + 3, z0 * 0.95), -1)); b1 = P(jaw((x + 4, cy - 3, z0 * 0.95), -1))
+            for q0, q1 in ((a0, a1), (b0, b1)):
+                det.append(f'<path d="M{q0[0] - 1.6 * s:.1f} {q0[1]:.1f} L{q1[0]:.1f} {q1[1]:.1f} L{q0[0] + 1.6 * s:.1f} {q0[1]:.1f} Z" fill="#F6F2DE"/>')
+        else:
+            dn = 1 if k % 2 == 0 else -1
+            q0 = P((x, cy + 1, z0)); q1 = P((x + 1, cy + 1 + dn * 4.5, z0))
+            det.append(f'<path d="M{q0[0] - 1.5 * s:.1f} {q0[1]:.1f} L{q1[0]:.1f} {q1[1]:.1f} L{q0[0] + 1.5 * s:.1f} {q0[1]:.1f} Z" fill="#F6F2DE"/>')
+    # nostril knob, eyes on raised bumps
+    part = 1 if open_ > 0.03 else 0
+    nk = P(jaw((143, -33, 0), part))
+    det.append(f'<ellipse cx="{nk[0]:.1f}" cy="{nk[1]:.1f}" rx="{7 * s:.1f}" ry="{4 * s:.1f}" fill="{TOP}"/><circle cx="{nk[0] - 2 * s:.1f}" cy="{nk[1] - 1 * s:.1f}" r="{1.3 * s:.1f}" fill="#1A2010"/><circle cx="{nk[0] + 2 * s:.1f}" cy="{nk[1] - 1 * s:.1f}" r="{1.3 * s:.1f}" fill="#1A2010"/>')
+    eyes = []
     for side in (-1, 1):
-        for k in range(10):
-            x = 84 + 6.5 * k; w = lerp(16, 8, k / 9)
-            a1 = jaw((x, -16, side * w), -1); a2 = jaw((x + 2, -9 + (2 if k % 3 == 0 else 0), side * w), -1)
-            line([a1, a2], "#F4F0DC", 2.6, zb=-0.4)
-            b1 = jaw((x + 3, -14, side * w * 0.95), 1); b2 = jaw((x + 4, -20 - (2 if k % 3 == 1 else 0), side * w * 0.95), 1)
-            line([b1, b2], "#F4F0DC", 2.4, zb=-0.35)
-    items.sort(key=lambda it: -it[0])
-    out = "".join(v for _, v in items)
-    shadow = f'<ellipse cx="{ox:.1f}" cy="{oy + 2:.1f}" rx="{(180 * abs(c) + 60 * abs(si)) * s:.1f}" ry="{12 * s:.1f}" fill="#05030F" opacity="{0.0 if sil else 0.25:.2f}" filter="url(#b6)"/>'
-    return shadow + out
+        bump = P(jaw((80, -42, side * 12), part)); e = P(jaw((82, -46, side * 12), part))
+        k = s * K(e[2])
+        o = f'<ellipse cx="{bump[0]:.1f}" cy="{bump[1]:.1f}" rx="{8.5 * k:.1f}" ry="{6.5 * k:.1f}" fill="{TOP}"/>'
+        if blink > 0.5:
+            o += f'<path d="M{e[0] - 5 * k:.1f} {e[1]:.1f} L{e[0] + 5 * k:.1f} {e[1]:.1f}" stroke="#1A2410" stroke-width="{2 * k:.1f}"/>'
+        else:
+            o += (glow(e[0], e[1], 14 * k, "#FFE04A", 0.5 * eye_glow, 4) if eye_glow > 0 else "")
+            o += (f'<ellipse cx="{e[0]:.1f}" cy="{e[1]:.1f}" rx="{5 * k:.1f}" ry="{4.4 * k:.1f}" fill="#E8C83A"/>'
+                  f'<ellipse cx="{e[0]:.1f}" cy="{e[1]:.1f}" rx="{1.1 * k:.1f}" ry="{3.9 * k:.1f}" fill="#120A04"/>'
+                  f'<circle cx="{e[0] - 1.6 * k:.1f}" cy="{e[1] - 1.7 * k:.1f}" r="{1.2 * k:.1f}" fill="#FFFFFF" opacity="0.85"/>')
+        eyes.append((e[2], o))
+    eyes.sort(key=lambda q: -q[0])
+    far = "".join(v for z, v in sorted(layers, key=lambda q: -q[0]) if z > zb_)
+    nearl = "".join(v for z, v in sorted(layers, key=lambda q: -q[0]) if z <= zb_)
+    shadow = f'<ellipse cx="{ox:.1f}" cy="{oy + 2:.1f}" rx="{(190 * abs(c) + 70 * abs(si)) * s:.1f}" ry="{12 * s:.1f}" fill="#05030F" opacity="{0.0 if sil else 0.25:.2f}" filter="url(#b6)"/>'
+    # head in front when it points at the camera, behind the body when it points away
+    hz = P((110, -26, 0))[2]
+    if hz <= zb_ or closed:
+        return shadow + far + body + nearl + head + "".join(det) + "".join(v for _, v in eyes)
+    return shadow + far + head + "".join(det) + "".join(v for _, v in eyes) + body + nearl
 
 
 # ------------------------------------------------------------------ world
@@ -299,6 +355,6 @@ def arm_pulled_J(pull=0.0, face=None):
     """Standing, leaning back hard, near arm stretched straight forward (held by the croc)."""
     J = dict(R3.SIDE)
     J.update(lean=lerp(-6, -22, pull), hip=(0, 20), k1=(-10, -100), f1=(-50, 0), k2=(30, -100), f2=(40, 0),
-             e2=(80, -290), h2=(165, -215), e1=(40, -300), h1=(110, -320),
+             e2=(75, -270), h2=(150, -170), e1=(40, -300), h1=(110, -320),
              face=face or fc(open=1.4, lift=1.0, knit=0.9, mouth="grit", look=(1, 0)))
     return J

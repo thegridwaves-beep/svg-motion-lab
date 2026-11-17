@@ -10,7 +10,7 @@ for i, ph in PH.items():
     for k, q in enumerate(ph):
         B[(i, k)] = q["t"]
 TEND = round(TEND, 3)
-CR_DEFS = lin("stageG", [(0, "#2A1E4A"), (1, "#120C24")])
+CR_DEFS = lin("stageG", [(0, "#2A1E4A"), (1, "#120C24")]) + CROC_DEFS
 WY = WATER_Y
 
 
@@ -60,7 +60,7 @@ def stage(t):
     return '<rect x="-600" y="-600" width="2160" height="1800" fill="url(#stageG)"/>' + glow(480, 360, 300, "#3AC8A0", 0.3, 40) + '<ellipse cx="480" cy="430" rx="420" ry="40" fill="#000000" opacity="0.3"/>'
 
 
-def croc_on_arm(t, hx, hy, s=1.1, yaw=180, open_=0.14, tug=0.0, roll=0.0, blink=0.0, pitch=30):
+def croc_on_arm(t, hx, hy, s=1.1, yaw=180, open_=0.14, tug=0.0, roll=0.0, blink=0.0, pitch=18):
     """Croc (facing left) lunging up out of the water, its jaw tip clamped on the boy's hand at (hx, hy)."""
     return croc3d(0, 0, s, yaw, t, open_=open_, roll=roll, sway=0.6, blink=blink, pitch=pitch, anchor=(hx + 30 * tug, hy))
 
