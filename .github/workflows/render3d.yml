@@ -95,7 +95,7 @@ jobs:
           openssl enc -aes-256-cbc -pbkdf2 -salt -in c.tar -out out/${{ github.event.inputs.name }}.bin -pass file:k.txt
           openssl pkeyutl -encrypt -pubin -inkey render/pub.pem -in k.txt -out out/${{ github.event.inputs.name }}.key
           rm -f k.txt c.tar
-          gh release create "r-${{ github.run_number }}" out/* -R "${{ github.repository }}" --title "r-${{ github.run_number }}" --notes "run ${{ github.run_id }}"
+          gh release create "s-${{ github.run_number }}" out/* -R "${{ github.repository }}" --title "s-${{ github.run_number }}" --notes "run ${{ github.run_id }}"
       - name: Remove raw parts
         if: ${{ always() }}
         env:
