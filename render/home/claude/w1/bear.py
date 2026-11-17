@@ -123,8 +123,8 @@ def b06(t, D):
     J = run_J(0.15, lean=lerp(0, 22, u), face=fc(open=1.4, lift=1.1, mouth="gasp"))
     me = boy(J, "b06", 480, 470, 0.62, L_FOREST, side=True, flip=True)
     cam = (0, -40 + kick(t, 0.12, 12, 0.2), lerp(1.2, 1.45, eo(ramp(t, 0, 0.3))), 0)
-    return SS(forest_layers(t, 470) + [(pack_side(480, 470, 0.62, True) + me, 1.0, False)],
-              cam, overlay=red_x(480, 250, ramp(t, 0.1, 0.35), 1.5) + tag_big("DON'T", 480, 100, ramp(t, 0.12, 0.4), 84, "#FF4A4A"))
+    return SS(forest_layers(t, 470) + [(pack_side(480, 470, 0.62, True) + me, 1.0, False), ui(red_x(480, 250, ramp(t, 0.1, 0.35), 1.5))],
+              cam, overlay=tag_big("DON'T", 480, 100, ramp(t, 0.12, 0.4), 84, "#FF4A4A"))
 
 
 @shot5(B["kmh"] - 0.1, "b07", "SIDE TRACKING at full speed: the grizzly gallops across the frame, the camera whips along beside it; a speed chip clocks ~55 km/h.")
@@ -446,8 +446,7 @@ def b31(t, D):
     line_ = f'<path d="M{480 - 100 * 0.62:.0f} {y_:.0f} L{480 + lerp(-100, 110, tr) * 0.62:.0f} {y_:.0f}" stroke="#2AA8E0" stroke-width="8" stroke-dasharray="14 10" stroke-linecap="round" opacity="{sl:.2f}"/>'
     bg = '<rect x="-600" y="-600" width="2160" height="1800" fill="#F4ECDC"/>'
     cam = (0, 60, lerp(1.0, 1.06, u), 0)
-    return SS([(bg, 0.4, True), (g_ + b_, 1.0, False), (line_ + red_x(480 + 36 * 0.62, y_ - 30, ramp(t, 1.0, 1.25), 0.4), 1.0, False)], cam,
-              overlay=badge("BLACK BEAR: NO HUMP", ramp(t, 0.3, 0.6), "#3A3448", 240), lights=())
+    return SS([(bg, 0.4, True), (g_ + b_, 1.0, False), (line_ + red_x(480 + 36 * 0.62, y_ - 30, ramp(t, 1.0, 1.25), 0.4), 1.0, False), ui(badge("BLACK BEAR: NO HUMP", ramp(t, 0.3, 0.6), "#3A3448", 238))], cam, lights=())
 
 
 @shot5(B["q"] - 0.1, "b32", "BACK ON THE TRAIL: over the boy's shoulder a bear steps out and stares; FLASH, it's the other kind. WHICH ONE? Loops to the start.")
