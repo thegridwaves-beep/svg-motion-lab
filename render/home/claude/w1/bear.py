@@ -61,7 +61,7 @@ def b01(t, D):
     u = eio(ramp(t, 0, D))
     bx = 420 + 70 * t
     h = hiker(t, bx, 420, 0.42, L_FOREST, "b01")
-    cam = (lerp(-60, bx - CX + 20, u), lerp(-520, 40, u), lerp(0.9, 1.55, u), lerp(-7, 0, u))
+    cam = (lerp(-60, bx - CX + 20, u), lerp(-520, 40, u), lerp(0.95, 1.55, u), lerp(-2.5, 0, u))
     return SS(forest_layers(t, 420) + [(h, 1.0, False), (fg_pines(t, (120, 900), 760, 900), 1.7, True)], cam)
 
 
@@ -331,7 +331,7 @@ def b21(t, D):
 def b22(t, D):
     u = eio(ramp(t, 0, D))
     b_ = bear3d(480, 420, 0.75, lerp(-160, -50, eo(ramp(t, 0, 0.5))), t, "black")
-    cam = (lerp(-260, 0, eo(ramp(t, 0, 0.3))), 0, lerp(1.5, 1.6, u), 0)
+    cam = (lerp(-110, 0, eo(ramp(t, 0, 0.3))), 0, lerp(1.5, 1.6, u), 0)
     return SS(forest_layers(t, 420) + [(b_, 1.0, False)], cam, overlay=hstreaks(1 - ramp(t, 0, 0.3)) + badge("BLACK BEAR", ramp(t, 0.1, 0.35), "#3A3448"))
 
 
@@ -422,7 +422,7 @@ def b28(t, D):
 def b29(t, D):
     u = eio(ramp(t, 0, D))
     g_ = bear3d(480, 470, 0.95, lerp(-30, 10, u), t, "grizzly", fur=GRIZ_DARK, glow_hump=ramp(t, 0.3, 0.7))
-    cam = (lerp(0, 32, u), lerp(110, 60, u), lerp(1.3, 1.75, u), lerp(-8, 4, u))
+    cam = (lerp(20, 60, u), lerp(100, 70, u), lerp(1.2, 1.45, u), lerp(-5, 3, u))
     return SS(forest_layers(t, 470) + [(g_, 1.0, False)], cam, overlay=tag_big("THE HUMP", 480, 90, ramp(t, 0.3, 0.6), 66, "#FFE45A"))
 
 
