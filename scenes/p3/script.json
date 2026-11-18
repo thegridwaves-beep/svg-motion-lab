@@ -1,0 +1,46 @@
+{
+ "title": "scene",
+ "speed": 1.0,
+ "lead": 0.28,
+ "outro": 0.8,
+ "gap": 0.3,
+ "music": "tension",
+ "sources": [
+  "NPS: grizzlies can run about 35 mph (56 km/h)",
+  "Usain Bolt peak speed ~44.7 km/h (12.4 m/s), 2009 Berlin 100 m"
+ ],
+ "lines": [
+  {
+   "text": "You're hiking alone...",
+   "caps": "You're *hiking | *alone"
+  },
+  {
+   "text": "and a bear steps onto the trail.",
+   "caps": "and a *bear | steps onto | the *trail"
+  },
+  {
+   "text": "It sees you.",
+   "caps": "It *sees | *you"
+  },
+  {
+   "text": "And it charges.",
+   "caps": "And it *charges"
+  },
+  {
+   "text": "Your brain screams run.",
+   "caps": "Your *brain | screams *run"
+  },
+  {
+   "text": "Don't.",
+   "caps": "*Don't"
+  },
+  {
+   "text": "A bear can hit around fifty five kilometres an hour,",
+   "caps": "A bear can *hit | *55 | km an *hour"
+  },
+  {
+   "text": "faster than any human alive.",
+   "caps": "*faster than | any *human | *alive"
+  }
+ ]
+}

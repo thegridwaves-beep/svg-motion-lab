@@ -65,7 +65,8 @@ jobs:
           F=round(T*f); a=F*i//n; b=F*(i+1)//n; print(a/f, b/f)")
           echo "chunk ${{ matrix.chunk }}: $A -> $B"
           mkdir -p /tmp/out
-          node tools/capture.mjs video /tmp/out/part$(printf %03d ${{ matrix.chunk }}).mp4 $A $B
+          O=/tmp/out/part$(printf %03d ${{ matrix.chunk }}).mp4
+          node tools/capture.mjs video $O $A $B || node tools/capture.mjs video $O $A $B || node tools/capture.mjs video $O $A $B
       - uses: actions/upload-artifact@v4
         with:
           name: part-${{ matrix.chunk }}

@@ -1,0 +1,55 @@
+{
+ "duration": 15.75,
+ "voice": "v1",
+ "speed": 1,
+ "lines": [
+  {
+   "i": 0,
+   "text": "You're hiking alone...",
+   "start": 0.286,
+   "end": 1.22
+  },
+  {
+   "i": 1,
+   "text": "and a bear steps onto the trail.",
+   "start": 1.435,
+   "end": 3.05
+  },
+  {
+   "i": 2,
+   "text": "It sees you.",
+   "start": 3.596,
+   "end": 4.944
+  },
+  {
+   "i": 3,
+   "text": "And it charges.",
+   "start": 4.964,
+   "end": 6.56
+  },
+  {
+   "i": 4,
+   "text": "Your brain screams run.",
+   "start": 7.154,
+   "end": 8.87
+  },
+  {
+   "i": 5,
+   "text": "Don't.",
+   "start": 9.24,
+   "end": 9.68
+  },
+  {
+   "i": 6,
+   "text": "A bear can hit around fifty five kilometres an hour,",
+   "start": 10.048,
+   "end": 12.65
+  },
+  {
+   "i": 7,
+   "text": "faster than any human alive.",
+   "start": 12.977,
+   "end": 14.74
+  }
+ ]
+}
