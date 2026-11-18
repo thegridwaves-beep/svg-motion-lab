@@ -205,18 +205,33 @@ def run_J(ph, lean=20, panic=1.0, **kw):
     return J
 
 
-def pack_side(x, y, s, flip=False, bob=0.0):
-    """Hiking backpack seen from the side (boy faces right): sits behind the torso."""
+def pack_side(x, y, s, flip=False, bob=0.0, lean=0.0):
+    """Hiking backpack seen from the side (boy faces right): snug against his back, tilts with his torso lean."""
     f = -1 if flip else 1
-    return (f'<g transform="translate({x:.1f} {y + bob * s:.1f}) scale({f * s:.4f} {s:.4f})">'
-            '<rect x="-96" y="-372" width="64" height="176" rx="22" fill="#2E7A5A"/><rect x="-92" y="-300" width="40" height="60" rx="12" fill="#246448"/>'
-            '<rect x="-100" y="-392" width="70" height="30" rx="14" fill="#E8703A"/><rect x="-98" y="-196" width="70" height="20" rx="10" fill="#3A3A4A"/></g>')
+    return (f'<g transform="translate({x:.1f} {y + bob * s:.1f}) scale({f * s:.4f} {s:.4f}) rotate({lean * 0.55:.2f} -10 -200)">'
+            '<rect x="-90" y="-374" width="64" height="178" rx="22" fill="#2E7A5A"/><rect x="-84" y="-302" width="40" height="60" rx="12" fill="#246448"/>'
+            '<rect x="-90" y="-374" width="12" height="178" rx="6" fill="#1E5A40" opacity="0.6"/>'
+            '<rect x="-94" y="-392" width="70" height="30" rx="14" fill="#E8703A"/><rect x="-92" y="-198" width="70" height="20" rx="10" fill="#3A3A4A"/>'
+            '<path d="M-30 -230 Q-18 -226 -8 -214" stroke="#1E4A36" stroke-width="9" fill="none" stroke-linecap="round"/></g>')
+
+
+def pack_strap(x, y, s, flip=False, bob=0.0, lean=0.0):
+    """Shoulder strap over the top of his shoulder (drawn over the body)."""
+    f = -1 if flip else 1
+    return (f'<g transform="translate({x:.1f} {y + bob * s:.1f}) scale({f * s:.4f} {s:.4f}) rotate({lean * 0.55:.2f} -10 -200)">'
+            '<path d="M-30 -368 Q-10 -384 8 -372 Q16 -360 14 -336" stroke="#1E4A36" stroke-width="11" fill="none" stroke-linecap="round"/></g>')
+
+
+def kid_side(J, uid, x, y, s, Lt, flip=False):
+    """Side-view boy wearing the backpack: pack behind, body, strap on top. Pack follows hip bob and torso lean."""
+    b, ln = J.get("hip", (0, 0))[1], J.get("lean", 0.0)
+    return pack_side(x, y, s, flip, b, ln) + boy(J, uid, x, y, s, Lt, side=True, flip=flip) + pack_strap(x, y, s, flip, b, ln)
 
 
 def hiker(t, x, y, s, Lt, uid, ph=None, flip=False, run=False, face=None):
     ph = (t * (1.6 if run else 0.9)) % 1 if ph is None else ph
     J = (run_J(ph) if run else walk_J(ph, face=face or fc(open=1.0, mouth="smile", look=(1, 0))))
-    return pack_side(x, y, s, flip, J["hip"][1]) + boy(J, uid, x, y, s, Lt, side=True, flip=flip)
+    return kid_side(J, uid, x, y, s, Lt, flip)
 
 
 def prone(uid, x, y, s, Lt, rot=-90, spread=1.0):
@@ -225,7 +240,8 @@ def prone(uid, x, y, s, Lt, rot=-90, spread=1.0):
                         kl=(-40 - 30 * spread, -100), fl=(-50 - 50 * spread, 0), kr=(40 + 30 * spread, -100), fr=(50 + 50 * spread, 0),
                         face=fc(open=0.2))
     body = back_pose(J)
-    return f'<g transform="translate({x:.1f} {y:.1f}) rotate({rot:.1f})">' + lit(body, uid, 0, 0, s, Lt) + '</g>'
+    return (f'<g transform="translate({x:.1f} {y:.1f}) rotate({rot:.1f})">' + lit(body, uid, 0, 0, s, Lt)
+            + f'<g transform="scale({s:.4f})">{PACK_BACK}</g></g>')
 
 
 # ------------------------------------------------------------------ forest world
@@ -379,7 +395,7 @@ def bear3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, kind="grizzly", fur=None, gait=0.0
     o = LK.bearL(ox, oy, s, yaw_deg, t, kind, _FILL.get(fur), gait, run, roar, persp, glow_hump, blink, skid, head_dx)
     if head_dy:
         o = f'<g transform="translate(0 {head_dy * s * 0.3:.1f})">{o}</g>'
-    return LK.rim(o, "W") if kind != "grizzly" else o
+    return o
 
 
 def bear_face(x, y, s=1.0, t=0.0, blink=0.0, angry=0.0, look=(0.0, 0.0), nose=0.0):
@@ -443,7 +459,30 @@ def claw_swipe(x, y, u, s=1.0):
     o = ""
     for k in range(3):
         L = 380 * min(1, u * 3)
-        o += (f'<path d="M{-190 + 60 * k} {-150 + 40 * k} q{L * 0.5:.0f} {L * 0.35:.0f} {L:.0f} {L * 0.55:.0f}" stroke="#1A0608" stroke-width="30" fill="none" stroke-linecap="round" opacity="0.55"/>'
-              f'<path d="M{-190 + 60 * k} {-150 + 40 * k} q{L * 0.5:.0f} {L * 0.35:.0f} {L:.0f} {L * 0.55:.0f}" stroke="#FF5A5A" stroke-width="12" fill="none" stroke-linecap="round"/>'
-              f'<path d="M{-190 + 60 * k} {-150 + 40 * k} q{L * 0.5:.0f} {L * 0.35:.0f} {L:.0f} {L * 0.55:.0f}" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>')
+        x0, y0 = -190 + 62 * (k - 1), -150 - 88 * (k - 1)
+        d = f'M{x0} {y0} q{L * 0.5:.0f} {L * 0.42:.0f} {L:.0f} {L * 0.7:.0f}'
+        o += (f'<path d="{d}" stroke="#1A0608" stroke-width="34" fill="none" stroke-linecap="round" opacity="0.6"/>'
+              f'<path d="{d}" stroke="#E8303A" stroke-width="16" fill="none" stroke-linecap="round"/>'
+              f'<path d="{d}" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>')
     return f'<g transform="translate({x:.1f} {y:.1f}) scale({s:.3f})" opacity="{clamp(2 - u * 2):.2f}">{o}</g>'
+
+
+PACK_BACK = ('<rect x="-60" y="-388" width="120" height="190" rx="28" fill="#2E7A5A"/>'
+             '<rect x="-60" y="-388" width="120" height="190" rx="28" fill="url(#vig)" opacity="0"/>'
+             '<rect x="-44" y="-300" width="88" height="70" rx="16" fill="#246448"/><path d="M-44 -282 L44 -282" stroke="#1E5A40" stroke-width="4"/>'
+             '<rect x="-66" y="-404" width="132" height="40" rx="18" fill="#E8703A"/><rect x="-10" y="-372" width="20" height="26" rx="5" fill="#3A3A4A"/>'
+             '<rect x="-62" y="-206" width="124" height="22" rx="11" fill="#3A3A4A"/>'
+             '<path d="M-52 -380 Q-60 -300 -50 -210" stroke="#FFFFFF" stroke-width="6" opacity="0.12" fill="none"/>')
+PACK_FRONT = ('<path d="M-44 -364 Q-40 -310 -40 -250" stroke="#1E4A36" stroke-width="10" fill="none" stroke-linecap="round"/>'
+              '<path d="M44 -364 Q40 -310 40 -250" stroke="#1E4A36" stroke-width="10" fill="none" stroke-linecap="round"/>'
+              '<rect x="-42" y="-312" width="84" height="8" rx="4" fill="#1E4A36"/><rect x="-8" y="-317" width="16" height="18" rx="4" fill="#3A3A4A"/>')
+
+
+def kid_front(J, uid, x, y, s, Lt, **kw):
+    """Front-view boy with the backpack straps over his sweater."""
+    return boy(J, uid, x, y, s, Lt, **kw) + f'<g transform="translate({x:.1f} {y:.1f}) scale({s:.4f})">{PACK_FRONT}</g>'
+
+
+def kid_back(J, uid, x, y, s, Lt, **kw):
+    """Back-view boy (over-the-shoulder shots) with the pack on his back."""
+    return boy(J, uid, x, y, s, Lt, backv=True, **kw) + f'<g transform="translate({x:.1f} {y:.1f}) scale({s:.4f})">{PACK_BACK}</g>'

@@ -61,7 +61,7 @@ def b01(t, D):
     u = eio(ramp(t, 0, D))
     bx = 420 + 70 * t
     h = hiker(t, bx, 420, 0.42, L_FOREST, "b01")
-    cam = (lerp(-60, bx - CX + 20, u), lerp(-520, 40, u), lerp(0.85, 1.55, u), lerp(-14, 0, u))
+    cam = (lerp(-60, bx - CX + 20, u), lerp(-520, 40, u), lerp(0.9, 1.55, u), lerp(-7, 0, u))
     return SS(forest_layers(t, 420) + [(h, 1.0, False), (fg_pines(t, (120, 900), 760, 900), 1.7, True)], cam)
 
 
@@ -70,7 +70,7 @@ def b02(t, D):
     w = ramp(t, 0, D * 0.75)
     bear = bear3d(lerp(640, 500, w), 330, 0.42, lerp(-170, -110, eio(w)), t, gait=(t * 0.9) % 1 if w < 1 else 0.0)
     J = R3.FRONT | dict(face=fc(open=1.0))
-    me = boy(J, "b02", 360, 760, 0.95, L_FOREST, backv=True)
+    me = kid_back(J, "b02", 360, 760, 0.95, L_FOREST)
     zu = ei(ramp(t, D * 0.72, D))
     cam = (lerp(0, 500 - CX + 10, zu), lerp(20, 300 - 90 * 0.42 - CY, zu), lerp(1.0, 2.4, zu), lerp(3, 0, zu))
     return SS([(forest_back(t), 0.3, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.6, True), (trail_persp(300), 1.0, True), (bear, 1.0, False),
@@ -105,8 +105,8 @@ def b05(t, D):
     u = eio(ramp(t, 0, D))
     J = R3.FRONT | dict(shr=0.7, el=(-92, -300), hl=(-70, -360), er=(92, -300), hr=(70, -360),
                         face=fc(open=1.5, lift=1.2, knit=0.8, mouth="o", mo=0.6, look=(0.2 * math.sin(t * 7), 0)))
-    me = boy(J, "b05", 480, 690, 1.05, L_FOREST)
-    bg = f'<g transform="translate(480 300) scale({lerp(1.0, 1.9, u):.3f}) translate(-480 -300)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}</g>'
+    me = kid_front(J, "b05", 480, 690, 1.05, L_FOREST)
+    bg = f'<g transform="translate(480 300) scale({lerp(1.0, 1.9, u):.3f}) translate(-480 -300)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}{trail_persp(372)}</g>'
     pulse = abs(math.sin(t * 9))
     tag = tag_big("RUN!", 480 + 4 * math.sin(t * 40), 70, ramp(t, 0.15, 0.45), 70, "#FF4A4A")
     return SS([(bg, 0.0, False), (me, 1.0, False), ui(tag + vign(0.25 + 0.25 * pulse, "#5A0000"))], (0, 0, 1.0, 0))
@@ -116,9 +116,9 @@ def b05(t, D):
 def b06(t, D):
     u = eo(ramp(t, 0, 0.25))
     J = run_J(0.15, lean=lerp(0, 22, u), face=fc(open=1.4, lift=1.1, mouth="gasp"))
-    me = boy(J, "b06", 480, 470, 0.62, L_FOREST, side=True, flip=True)
+    me = kid_side(J, "b06", 480, 470, 0.62, L_FOREST, flip=True)
     cam = (0, -40 + kick(t, 0.12, 12, 0.2), lerp(1.2, 1.45, eo(ramp(t, 0, 0.3))), 0)
-    return SS(forest_layers(t, 470) + [(pack_side(480, 470, 0.62, True) + me, 1.0, False), ui(red_x(480, 250, ramp(t, 0.1, 0.35), 1.5))],
+    return SS(forest_layers(t, 470) + [(me, 1.0, False), ui(red_x(480, 250, ramp(t, 0.1, 0.35), 1.5))],
               cam, overlay=tag_big("DON'T", 480, 100, ramp(t, 0.12, 0.4), 84, "#FF4A4A"))
 
 
@@ -135,25 +135,25 @@ def b07(t, D):
 @shot5(B["human"] - 0.1, "b08", "THE RACE: the boy sprints flat out with the world's fastest human pace (~44 km/h) and the bear still blows past him.")
 def b08(t, D):
     u = ramp(t, 0, D)
-    hx = 420 + 200 * t; bxx = 160 + 330 * t
-    me = boy(run_J((t * 2.2) % 1), "b08", hx, 430, 0.42, L_FOREST, side=True)
-    bear = bear3d(bxx, 440, 0.52, 0, t, gait=(t * 2.6) % 1, run=1.0)
-    cam = ((hx + bxx) / 2 - CX + 40, 110, 1.15, 0)
+    hx = 420 + 200 * t; bxx = 20 + 300 * t
+    me = kid_side(run_J((t * 2.2) % 1), "b08", hx, 440, 0.42, L_FOREST)
+    bear = bear3d(bxx, 440, 0.66, 0, t, gait=(t * 2.6) % 1, run=1.0)
+    cam = (hx - 90 - CX, 110, 1.15, 0)
     chips = kmh_chip(480, 70, "~44 km/h", "FASTEST HUMAN EVER", ramp(t, 0.1, 0.4)) + kmh_chip(480, 200, "~55 km/h", "BEAR", ramp(t, 1.0, 1.3), edge="#FFB040")
     return SS([(forest_back(t), 0.25, True), (pine_row(390, 21, "#1E4A36", 18, 220, 340), 0.6, True), (trail_side(430), 1.0, True),
-               (pack_side(hx, 430, 0.42) + me, 1.0, False), (bear, 1.0, False)], cam, overlay=hstreaks(0.35) + chips)
+               (bear, 1.0, False), (me, 1.0, False)], cam, overlay=hstreaks(0.35) + chips)
 
 
 # ================================================================== the moves
 @shot5(B["bluff"] - 0.1, "b09", "GROUND LEVEL: the bear thunders at the boy and skids to a dead stop metres away in a spray of dirt. BLUFF.")
 def b09(t, D):
     sk = eo(ramp(t, 0.55, 1.05))
-    bxx = lerp(900, 600, ramp(t, 0, 0.55)) - 70 * sk
-    bear = bear3d(bxx, 430, 0.55, 180, t, gait=(t * 2.4) % 1 if sk < 0.05 else 0.0, run=1.0 - sk, skid=sk if sk < 0.99 else 0.0, roar=0.6 * (1 - sk), head_dy=8 * sk)
+    bxx = lerp(980, 700, ramp(t, 0, 0.55)) - 70 * sk
+    bear = bear3d(bxx, 430, 0.66, 180, t, gait=(t * 2.4) % 1 if sk < 0.05 else 0.0, run=1.0 - sk, skid=sk if sk < 0.99 else 0.0, roar=0.6 * (1 - sk), head_dy=8 * sk)
     J = R3.SIDE | dict(face=fc(open=1.3, lift=0.9, mouth="gasp", look=(1, 0)))
-    me = pack_side(380, 430, 0.42) + boy(J, "b09", 380, 430, 0.42, L_FOREST, side=True)
+    me = kid_side(J, "b09", 380, 430, 0.42, L_FOREST)
     dirt = "".join(f'<circle cx="{bxx - 70 + 26 * k:.1f}" cy="{430 - 30 * sk * (k % 3):.1f}" r="{(10 + 6 * k) * sk:.1f}" fill="#C8A070" opacity="{0.5 * (1 - ramp(t, 1.1, D)):.2f}" filter="url(#b4)"/>' for k in range(6))
-    cam = (lerp(110, 10, eio(ramp(t, 0, 1.0))), 110 + kick(t, 0.95, 10), lerp(1.1, 1.3, ramp(t, 0, D)), lerp(-6, 0, ramp(t, 0, 1)))
+    cam = (lerp(75, 55, eio(ramp(t, 0, 1.0))), 100 + kick(t, 0.95, 10), lerp(0.84, 0.92, ramp(t, 0, D)), lerp(-4, 0, ramp(t, 0, 1)))
     return SS(forest_layers(t, 430) + [(me + bear + dirt, 1.0, False)], cam, overlay=tag_big("BLUFF", 480, 90, ramp(t, 1.0, 1.3), 76, "#FFE45A"))
 
 
@@ -163,7 +163,7 @@ def b10(t, D):
     up = eo(ramp(t, 0, 0.5))
     J = R3.FRONT | dict(el=(-150, -330 - 40 * up), hl=(-210, -380 - 60 * up), er=(150, -330 - 40 * up), hr=(210, -380 - 60 * up),
                         kl=(-40, -100), fl=(-56, 0), kr=(40, -100), fr=(56, 0), face=fc(open=1.0, lift=0.2, knit=0.6, mouth="grit", look=(0, 0)))
-    me = boy(J, "b10", 480 + lerp(-30, 30, u), 520, 0.75, L_FOREST)
+    me = kid_front(J, "b10", 480 + lerp(-30, 30, u), 520, 0.75, L_FOREST)
     bear = f'<g filter="url(#b6)">{bear3d(lerp(620, 340, u), 300, 0.32, lerp(-120, -60, u), t)}</g>'
     cam = (lerp(-30, 30, u), 30, lerp(1.25, 1.4, u), lerp(-9, 9, u))
     return SS([(forest_back(t), 0.2, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.45, True), (trail_persp(300), 0.7, True), (bear, 0.7, False), (me, 1.0, False)], cam)
@@ -174,9 +174,9 @@ def b11(t, D):
     talk = abs(math.sin(t * 11))
     J = R3.FRONT | dict(el=(-100, -300), hl=(-90, -380), er=(100, -300), hr=(90, -380),
                         face=fc(open=0.9, lift=0.3, mouth="o" if talk > 0.5 else "smile", mo=0.3 * talk, look=(0.3, 0)))
-    me = boy(J, "b11", 480, 700, 1.1, L_FOREST)
+    me = kid_front(J, "b11", 480, 700, 1.1, L_FOREST)
     rings = "".join(f'<circle cx="480" cy="230" r="{60 + 120 * ((t * 0.9 + k / 3) % 1):.1f}" fill="none" stroke="#9AE8FF" stroke-width="5" opacity="{0.5 * (1 - (t * 0.9 + k / 3) % 1):.2f}"/>' for k in range(3))
-    bg = f'<g filter="url(#b10)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}</g>'
+    bg = f'<g filter="url(#b10)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}{trail_persp(372)}</g>'
     cam = (lerp(10, -10, ramp(t, 0, D)), 0, lerp(1.0, 1.08, ramp(t, 0, D)), 0)
     return SS([(bg, 0.3, True), (rings, 0.9, False), (me, 1.0, False)], cam)
 
@@ -188,7 +188,7 @@ def b12(t, D):
     can = spray_in_hand(480, cy_ + 40, 1.45, lerp(-10, 0, u), safety=1 - eo(ramp(t, 1.1, 1.4)))
     hand = ""
     belt = f'<rect x="-600" y="{lerp(500, 760, u):.0f}" width="2160" height="60" fill="#3A2A22"/><rect x="-600" y="{lerp(440, 700, u):.0f}" width="2160" height="400" fill="#3A4E7A" opacity="0.0"/>'
-    bg = f'<g filter="url(#b12)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}</g>'
+    bg = f'<g filter="url(#b12)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}{trail_persp(372)}</g>'
     cam = (0, lerp(60, 0, u), lerp(1.2, 1.35, ramp(t, 0, D)), lerp(8, -4, u))
     return SS([(bg, 0.3, True), (belt, 1.0, False), (can + hand, 1.0, False)], cam)
 
@@ -197,9 +197,11 @@ def b12(t, D):
 def b13(t, D):
     u = ramp(t, 0, D)
     bear = bear3d(480, lerp(320, 360, u), lerp(0.4, 0.75, ei(u)), -90, t, gait=(t * 2.2) % 1, run=1.0, roar=0.5, persp=0.001)
-    J = R3.FRONT | dict(er=(70, -380), hr=(40, -470), face=fc(open=1.0))
-    me = boy(J, "b13", 380, 780, 0.95, L_FOREST, backv=True)
-    can = spray_can(420, 300, 0.7, 20, safety=0)
+    J = R3.FRONT | dict(er=(62, -372), hr=(78, -396), face=fc(open=1.0))
+    me = kid_back(J, "b13", 380, 780, 0.95, L_FOREST)
+    hx_, hy_ = 380 + 78 * 0.95, 780 - 396 * 0.95
+    by_ = lerp(320, 360, u) - 70 * lerp(0.4, 0.75, ei(u))
+    can = spray_in_hand(hx_, hy_, 0.42, math.degrees(math.atan2(480 - hx_, hy_ - by_)), safety=0)
     cam = (lerp(0, 20, u), 0, lerp(1.1, 1.3, eio(u)), 2)
     return SS([(forest_back(t), 0.3, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.6, True), (trail_persp(300), 1.0, True), (bear, 1.0, False),
                (me + can, 1.4, False)], cam)
@@ -209,13 +211,17 @@ def b13(t, D):
 def b14(t, D):
     u = ramp(t, 0, D)
     spr = eo(ramp(t, 0.15, 1.5))
-    J = R3.SIDE | dict(e2=(60, -330), h2=(150, -340), e1=(50, -320), h1=(140, -330), lean=-4, face=fc(open=0.8, knit=0.9, mouth="grit", look=(1, 0)))
-    me = pack_side(370, 430, 0.42) + boy(J, "b14", 370, 430, 0.42, L_FOREST, side=True)
-    can = spray_can(370 + 150 * 0.42, 430 - 340 * 0.42, 0.32, 90, safety=0)
-    bxx = lerp(720, 640, eo(u))
-    bear = bear3d(bxx, 440, 0.5, 180 - 20 * spr, t * 0.4, gait=(t * 0.9) % 1, run=1 - spr, roar=0.7, blink=1.0 if spr > 0.5 else 0.0, head_dy=-6 * spr)
-    cloud = spray_cloud(370 + 170 * 0.42, 430 - 340 * 0.42, spr, t, 1, 0.75)
-    cam = (lerp(20, 40, eio(u)), 100, lerp(1.1, 1.18, eio(u)), lerp(-6, 6, eio(u)))
+    J = R3.SIDE | dict(e2=(56, -312), h2=(128, -262), e1=(46, -306), h1=(118, -258), lean=-4, face=fc(open=0.8, knit=0.9, mouth="grit", look=(1, 0.3)))
+    me = kid_side(J, "b14", 370, 430, 0.42, L_FOREST)
+    nx, ny = 370 + 150 * 0.42, 430 - 262 * 0.42
+    bxx = lerp(760, 655, eo(ramp(t, 0, 0.5))) + 25 * eo(ramp(t, 0.6, 1.4))
+    bs = 0.66
+    hdx, hdy = bxx - 140 * bs, 440 - 88 * bs
+    ang = math.degrees(math.atan2(hdy - ny, hdx - nx))
+    can = spray_can(370 + 128 * 0.42, 430 - 262 * 0.42, 0.32, 90 + ang, safety=0)
+    bear = bear3d(bxx, 440, bs, 180 - 20 * spr, t * 0.4, gait=(t * 0.9) % 1, run=1 - ramp(t, 0.4, 0.6), roar=0.7 * (1 - spr), blink=1.0 if spr > 0.35 else 0.0, head_dx=10 * spr, head_dy=-6 * spr)
+    cloud = f'<g transform="rotate({ang:.1f} {nx:.1f} {ny:.1f})">{spray_cloud(nx, ny, spr, t, 1, 0.62)}</g>'
+    cam = (lerp(40, 55, eio(u)), 95, lerp(0.8, 0.86, eio(u)), lerp(-4, 4, eio(u)))
     return SS(forest_layers(t, 440) + [(me + can, 1.0, False), (bear, 1.0, False), (cloud, 1.05, False)], cam)
 
 
@@ -224,11 +230,11 @@ def b15(t, D):
     u = ramp(t, 0, D)
     turn = eio(ramp(t, 0, 0.6))
     run_ = ramp(t, 0.4, D)
-    bear = bear3d(lerp(620, 1000, ei(run_)), lerp(440, 380, run_), lerp(0.5, 0.42, run_), lerp(180, 20, turn), t, gait=(t * 2.2) % 1, run=run_)
+    bear = bear3d(lerp(680, 1080, ei(run_)), lerp(440, 380, run_), lerp(0.66, 0.5, run_), lerp(180, 20, turn), t, gait=(t * 2.2) % 1, run=run_)
     J = R3.SIDE | dict(e2=(40, -300), h2=(100, -260), face=fc(open=1.0, lift=0.3, mouth="smile", look=(1, 0)))
-    me = pack_side(380, 440, 0.42) + boy(J, "b15", 380, 440, 0.42, L_FOREST, side=True)
+    me = kid_side(J, "b15", 380, 440, 0.42, L_FOREST)
     haze = f'<rect x="-600" y="-600" width="2160" height="1800" fill="#FFA060" opacity="{0.25 * (1 - u):.2f}" filter="url(#b20)"/>'
-    cam = (lerp(30, 110, u), lerp(110, 60, eio(u)), lerp(1.2, 1.0, eio(u)), lerp(4, -4, u))
+    cam = (lerp(55, 40, u), lerp(100, 70, eio(u)), lerp(0.88, 0.82, eio(u)), lerp(3, -3, u))
     return SS(forest_layers(t, 440) + [(me + bear + haze, 1.0, False)], cam,
               overlay=kmh_chip(480, 90, "~9 in 10", "ENCOUNTERS STOPPED BY SPRAY", ramp(t, 0.5, 0.8), edge="#5AE08A"))
 
@@ -253,12 +259,11 @@ def stage(t):
 @shot5(B["which"] - 0.1, "b17", "TURNTABLE: a grizzly and a black bear revolve side by side on a dark stage, a big ? between them.")
 def b17(t, D):
     u = ramp(t, 0, D)
-    y1 = 190 + 50 * t
-    g_ = bear3d(480, 270, 0.72, y1, t, "grizzly")
-    b_ = bear3d(480, 510, 0.72, y1 + 180, t, "black")
+    g_ = bear3d(480, 270, 0.72, lerp(200, 245, eio(u)), t, "grizzly")
+    b_ = bear3d(480, 510, 0.72, lerp(340, 295, eio(u)), t, "black")
     cam = (0, 100, lerp(1.08, 1.14, u), 0)
     return SS([(stage(t), 0.4, True), (g_ + b_, 1.0, False)], cam,
-              overlay=tag_big("GRIZZLY?", 480, 40, ramp(t, 0.2, 0.5), 42) + tag_big("BLACK BEAR?", 480, 270, ramp(t, 0.5, 0.8), 42) + tag_big("?", 610, 200, ramp(t, 1.0, 1.3), 110, "#FFE45A"),
+              overlay=tag_big("GRIZZLY OR BLACK BEAR?", 480, 40, ramp(t, 0.2, 0.5), 40) + tag_big("?", 610, 200, ramp(t, 1.0, 1.3), 110, "#FFE45A"),
               lights=())
 
 
@@ -267,9 +272,9 @@ def b18(t, D):
     side_ = 0 if t < 0.55 else (1 if t < 1.1 else 0)
     g_ = bear3d(330, 390, 0.62, -40, t, "grizzly", roar=0.8)
     b_ = bear3d(1130, 390, 0.62, -140, t, "black", roar=0.8)
-    pos = [0, 1, 0, 1][min(3, int(t / 0.55))]
+    pos = [0, 1, 1, 1][min(3, int(t / 0.55))]
     x = 330 if pos == 0 else 1130
-    wp = max(whip(t, 0.55, 0.12), whip(t, 1.1, 0.12), whip(t, 1.65, 0.12))
+    wp = whip(t, 0.55, 0.14)
     cam = (x - CX + 30, 40, 1.45, 0)
     red = f'<rect x="-600" y="-600" width="2560" height="1800" fill="#FF1A2A" opacity="{0.3 * ramp(t, 0.6, 1.6):.2f}" style="mix-blend-mode:multiply"/>'
     return SS([(stage(t), 0.4, True), (g_ + b_ + red, 1.0, False), ui(hstreaks(wp) + vign(0.35 * ramp(t, 0.5, 1.5), "#3A0000"))], cam,
@@ -305,7 +310,7 @@ def b20(t, D):
     if hands < 1:
         J = R3.FRONT | dict(el=J_el, hl=(lerp(-120, -26, hands), lerp(-200, -470, hands)), er=(-J_el[0], J_el[1]), hr=(lerp(120, 26, hands), lerp(-200, -470, hands)),
                             kl=(-46, -100), fl=(-56, 0), kr=(46, -100), fr=(56, 0), face=fc(open=0.2))
-        me = f'<g transform="translate(612 300) rotate(-90)">' + lit(back_pose(J), "b20", 0, 0, 0.5, L_FOREST) + '</g>'
+        me = f'<g transform="translate(612 300) rotate(-90)">' + lit(back_pose(J), "b20", 0, 0, 0.5, L_FOREST) + f'<g transform="scale(0.5)">{PACK_BACK}</g></g>'
     cam = (0, 0, lerp(1.1, 1.65, u), lerp(-40, 10, u))
     return SS([(topdown(t), 1.0, True), (me, 1.0, False)], cam)
 
@@ -315,7 +320,8 @@ def b21(t, D):
     sp = eo(ramp(t, 0, 0.5))
     shove = math.sin(math.pi * clamp((t - 0.7) / 0.9))
     me = prone("b21", 612, 300 - 6 * shove, 0.5, L_FOREST, -90 + 3 * shove, 0.2 + 0.8 * sp)
-    pw = paw(480 + 20 * shove, lerp(-60, 120, clamp((t - 0.6) / 0.4)) + 20 * shove, 0.9, 180)
+    land = eo(clamp((t - 0.55) / 0.3))
+    pw = paw(500 + 26 * shove, lerp(-90, 196, land) + 6 * shove, 0.8, 180 - 12 * shove)
     arrows = "".join(f'<path d="M{640:.0f} {300 + 60 * k * sp:.0f} l30 {30 * k}" stroke="#FFE45A" stroke-width="10" stroke-linecap="round" opacity="{sp:.2f}"/>' for k in (-1, 1))
     cam = (0, 0, lerp(1.25, 1.4, ramp(t, 0, D)), 0)
     return SS([(topdown(t), 1.0, True), (me + arrows, 1.0, False), (pw, 1.1, False)], cam)
@@ -332,12 +338,13 @@ def b22(t, D):
 @shot5(B["fight"] - 0.1, "b23", "LOW ANGLE: the boy snatches a thick branch off the ground and raises it overhead, jaw set.")
 def b23(t, D):
     up = eo(ramp(t, 0.1, 0.7))
-    J = R3.FRONT | dict(er=(110, lerp(-260, -380, up)), hr=(lerp(120, 60, up), lerp(-160, -500, up)), el=(-90, -300), hl=(-60, -340),
+    hrx, hry = lerp(120, 60, up), lerp(-160, -500, up)
+    J = R3.FRONT | dict(er=(110, lerp(-260, -380, up)), hr=(hrx, hry), el=(-118, lerp(-300, -340, up)), hl=(-128, lerp(-330, -440, up)),
                         kl=(-40, -100), fl=(-60, 0), kr=(40, -100), fr=(60, 0), face=fc(open=1.0, knit=1.0, lift=-0.2, mouth="grit", look=(0, 0)))
     hx, hy = 480 + lerp(120, 60, up) * 0.75, 560 + lerp(-160, -500, up) * 0.75
     ang = lerp(20, -60, up)
     st = stick(hx - 40 * math.cos(math.radians(ang)), hy - 40 * math.sin(math.radians(ang)), 0.9, ang)
-    me = boy(J, "b23", 480, 560, 0.75, L_FOREST)
+    me = kid_front(J, "b23", 480, 560, 0.75, L_FOREST)
     cam = (0, 40, lerp(1.2, 1.35, ramp(t, 0, D)), lerp(6, -3, up))
     return SS([(forest_back(t), 0.2, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.45, True), (trail_persp(300), 0.8, True), (st + me, 1.0, False)], cam)
 
@@ -350,15 +357,16 @@ def b24(t, D):
         sw = max(sw, clamp(1 - abs(t - h) / 0.25))
     J = R3.SIDE | dict(e2=(50, -340), h2=(lerp(-20, 120, sw), lerp(-480, -300, sw)), e1=(30, -330), h1=(lerp(-30, 100, sw), lerp(-470, -300, sw)),
                        lean=lerp(-6, 10, sw), face=fc(open=1.0, knit=1.0, mouth="grit", look=(1, 0)))
-    me = pack_side(400, 440, 0.45) + boy(J, "b24", 400, 440, 0.45, L_FOREST, side=True)
+    me = kid_side(J, "b24", 400, 440, 0.45, L_FOREST)
     sx, sy = 400 + lerp(-20, 120, sw) * 0.45, 440 + lerp(-480, -300, sw) * 0.45
-    st = stick(sx, sy, 0.6, lerp(-80, 40, sw))
+    st = stick(sx - 14, sy + 4, 0.78, lerp(-80, 32, sw))
     rec = max(clamp(1 - abs(t - h - 0.15) / 0.3) for h in hits)
     back_off = ramp(t, 2.4, D)
-    bear = bear3d(lerp(650, 760, back_off) + 20 * rec, 450, 0.55, 180 + 15 * back_off, t, "black", head_dx=-12 * rec, head_dy=-6 * rec, blink=rec, roar=0.4 * rec,
+    bxb = lerp(612, 760, back_off) + 20 * rec
+    bear = bear3d(bxb, 450, 0.63, 180 + 15 * back_off, t, "black", head_dx=-12 * rec, head_dy=-6 * rec, blink=rec, roar=0.4 * rec,
                   gait=(t * 1.2) % 1 if back_off > 0 else 0.0)
-    stars = "".join(impact_star(568, 400, clamp((t - h) / 0.3), 0.5) for h in hits if t > h)
-    cam = (40 + kick(t, 0.55, 8) + kick(t, 1.45, 8) + kick(t, 2.3, 8), 100, lerp(0.95, 1.02, ramp(t, 0, D)), -4)
+    stars = "".join(impact_star(612 - 145 * 0.63 + 6, 450 - 87 * 0.63, clamp((t - h) / 0.3), 0.5) for h in hits if t > h)
+    cam = (40 + kick(t, 0.55, 8) + kick(t, 1.45, 8) + kick(t, 2.3, 8), 95, lerp(0.88, 0.94, ramp(t, 0, D)), -3)
     return SS(forest_layers(t, 440) + [(bear, 1.0, False), (me + st, 1.0, False), (stars, 1.0, False)], cam,
               overlay=tag_big("FACE + NOSE", 480, 90, ramp(t, 0.3, 0.6), 52))
 
@@ -451,7 +459,7 @@ def b32(t, D):
     kind = "grizzly" if k == 0 else "black"
     bear = bear3d(500, 330, 0.42, lerp(-130, -100, u), t, kind, fur=fur)
     J = R3.FRONT | dict(face=fc(open=1.0))
-    me = boy(J, "b32", lerp(330, 380, u), 760, 0.95, L_FOREST, backv=True)
+    me = kid_back(J, "b32", lerp(330, 380, u), 760, 0.95, L_FOREST)
     cam = (lerp(-10, 20, u), lerp(0, 20, u), lerp(1.3, 1.5, u), lerp(-4, 2, u))
     fl = flashw(clamp(1 - abs(t - 1.6) / 0.08) * 0.7)
     return SS([(forest_back(t), 0.3, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.6, True), (trail_persp(300), 1.0, True), (bear, 1.0, False), (me, 1.4, False)],

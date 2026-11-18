@@ -221,9 +221,13 @@ def bearL(ox, oy, s=1.0, yaw=0.0, t=0.0, kind="grizzly", fur=None, gait=0.0, run
     for side in (-1, 1):
         e = P((104 + hx, (-134 if not G else -128), side * (20 if not G else 24)))
         k_ = K(e[2]); er = (11 if not G else 9) * s * k_; eh = (15 if not G else 9) * s * k_
-        det.append((e[2], f'<ellipse cx="{e[0]:.1f}" cy="{e[1]:.1f}" rx="{er:.1f}" ry="{eh:.1f}" fill="{fill}"/><ellipse cx="{e[0]:.1f}" cy="{e[1] + 2 * s:.1f}" rx="{er * 0.5:.1f}" ry="{eh * 0.55:.1f}" fill="{dark}"/>'))
-    for side in (-1, 1):
-        e = P((122 + hx, -110, side * 14)); k_ = K(e[2])
+        det.append((e[2], f'<ellipse cx="{e[0]:.1f}" cy="{e[1]:.1f}" rx="{er:.1f}" ry="{eh:.1f}" fill="{fill}"/><ellipse cx="{e[0]:.1f}" cy="{e[1] + 1 * s:.1f}" rx="{er * 0.45:.1f}" ry="{eh * 0.5:.1f}" fill="{dark}" opacity="0.35"/>'))
+    eyes_ = [(side, P((122 + hx, -110, side * 14))) for side in (-1, 1)]
+    far_z = max(e[2] for _, e in eyes_)
+    for side, e in eyes_:
+        k_ = K(e[2])
+        if e[2] == far_z and abs(si) < 0.42:
+            continue                                   # far eye is hidden behind the snout in side-ish views
         if blink > 0.5:
             det.append((e[2] - 30, f'<path d="M{e[0] - 4 * s * k_:.1f} {e[1]:.1f} l{8 * s * k_:.1f} 0" stroke="#0A0606" stroke-width="{2 * s * k_:.1f}"/>'))
         else:
