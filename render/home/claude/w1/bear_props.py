@@ -247,7 +247,7 @@ def prone(uid, x, y, s, Lt, rot=-90, spread=1.0):
 # ------------------------------------------------------------------ forest world
 def forest_sky(t, warm=0.0):
     top = mixc("#5AA8E8", "#F0A060", warm); bot = mixc("#D8F0FF", "#FFE0A8", warm)
-    return (f'<rect x="-700" y="-900" width="2360" height="1700" fill="{top}"/>'
+    return (f'<rect x="-900" y="-1600" width="2760" height="2400" fill="{top}"/>'
             f'<rect x="-700" y="-60" width="2360" height="420" fill="{bot}" opacity="0.85" filter="url(#b40)"/>'
             + glow(760, -40, 260, "#FFF4C8", 0.6, 30))
 
