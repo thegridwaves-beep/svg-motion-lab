@@ -61,8 +61,8 @@ def b01(t, D):
     u = eio(ramp(t, 0, D))
     bx = 420 + 70 * t
     h = hiker(t, bx, 420, 0.42, L_FOREST, "b01")
-    cam = (lerp(-60, bx - CX + 20, u), lerp(-520, 40, u), lerp(0.95, 1.55, u), lerp(-2.5, 0, u))
-    return SS(forest_layers(t, 420) + [(h, 1.0, False), (fg_pines(t, (120, 900), 760, 900), 1.7, True)], cam)
+    cam = (lerp(-60, bx - CX + 20, u), lerp(-380, 40, u), lerp(0.95, 1.55, u), lerp(-2.5, 0, u))
+    return SS([('<rect x="-4000" y="-4000" width="9000" height="9000" fill="#5AA8E8"/>', 0.0, True)] + forest_layers(t, 420) + [(h, 1.0, False), (fg_pines(t, (120, 900), 760, 900), 1.7, True)], cam)
 
 
 @shot5(B["steps"] - 0.1, "b02", "OVER THE SHOULDER: down the trail ahead, a grizzly lumbers out of the trees onto the path and stops. Crash zoom.")
