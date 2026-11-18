@@ -15,7 +15,8 @@ B = dict(steps=Pn(0, 1), sees=Ln(1), charges=Pn(1, 1), run=Ln(2), dont=Pn(2, 1),
 for k in B:
     B[k] = round(B[k], 3)
 
-BR_DEFS = lin("stageG", [(0, "#2A1E4A"), (1, "#120C24")]) + lin("topG", [(0, "#7AAA52"), (1, "#5E8E42")])
+import looks as LK
+BR_DEFS = LK.L_defs() + lin("stageG", [(0, "#2A1E4A"), (1, "#120C24")]) + lin("topG", [(0, "#7AAA52"), (1, "#5E8E42")])
 
 
 def SS(layers, cam=(0, 0, 1.0), overlay="", lights=(L_FOREST,)):
@@ -54,12 +55,6 @@ def forest_layers(t, ground_y=400, fg=True, warm=0.0):
     return L
 
 
-def paw(x, y, s=1.0, ang=0.0, col="#6A4426"):
-    claws = "".join(f'<path d="M{-30 + 20 * k} -46 Q{-34 + 20 * k} -86 {-26 + 20 * k} -104" stroke="#EDE2C8" stroke-width="9" fill="none" stroke-linecap="round"/>' for k in range(4))
-    return (f'<g transform="translate({x:.1f} {y:.1f}) rotate({ang:.1f}) scale({s:.3f})">{claws}<ellipse cx="0" cy="0" rx="70" ry="56" fill="{col}"/>'
-            f'<ellipse cx="0" cy="10" rx="34" ry="24" fill="#3A2416"/>' + "".join(f'<ellipse cx="{-30 + 20 * k}" cy="-36" rx="10" ry="12" fill="#3A2416"/>' for k in range(4)) + '</g>')
-
-
 # ================================================================== the danger
 @shot5(0.0, "b01", "AERIAL DIVE: from high above the pine forest the camera plunges down and swings in beside the boy hiking the trail.")
 def b01(t, D):
@@ -86,7 +81,7 @@ def b02(t, D):
 def b03(t, D):
     u = eio(ramp(t, 0, D))
     bl = 1.0 if 0.35 < t < 0.47 else 0.0
-    bear = bear3d(480, 520, 2.6, -90 + 8 * math.sin(t * 1.2) * (1 - u), t, blink=bl, head_dy=4 * math.sin(t * 9) * ramp(t, 0.6, 0.9))
+    bear = bear_face(480 + 6 * math.sin(t * 1.3) * (1 - u), 300 + 2 * math.sin(t * 2), 0.6, t, blink=bl, angry=ramp(t, 0.55, 0.85), look=(0.0, 0.2), nose=ramp(t, 0.6, 0.9))
     bg = f'<g filter="url(#b12)">{forest_back(t)}{pine_row(300, 21, "#1E4A36", 14, 220, 340)}{trail_persp(300)}</g>'
     cam = (0, lerp(-10, -40, u), lerp(1.55, 1.95, u), 0)
     return SS([(bg, 0.4, True), (bear, 1.0, False), ui(vign(0.35))], cam)
@@ -190,8 +185,8 @@ def b11(t, D):
 def b12(t, D):
     u = eio(ramp(t, 0, 0.9))
     cy_ = lerp(560, 330, u)
-    can = spray_can(480, cy_, 1.6, lerp(-10, 0, u), safety=1 - eo(ramp(t, 1.1, 1.4)))
-    hand = hand_grip(480, cy_ - 30, 1.5)
+    can = spray_in_hand(480, cy_ + 40, 1.45, lerp(-10, 0, u), safety=1 - eo(ramp(t, 1.1, 1.4)))
+    hand = ""
     belt = f'<rect x="-600" y="{lerp(500, 760, u):.0f}" width="2160" height="60" fill="#3A2A22"/><rect x="-600" y="{lerp(440, 700, u):.0f}" width="2160" height="400" fill="#3A4E7A" opacity="0.0"/>'
     bg = f'<g filter="url(#b12)">{forest_back(t)}{pine_row(360, 21, "#1E4A36", 14, 220, 340)}</g>'
     cam = (0, lerp(60, 0, u), lerp(1.2, 1.35, ramp(t, 0, D)), lerp(8, -4, u))
@@ -242,13 +237,13 @@ def b15(t, D):
 @shot5(B["contact"] - 0.1, "b16", "IMPACT FRAME: the bear lunges paw-first through the haze at the lens; white flash, the frame freezes red.")
 def b16(t, D):
     u = ramp(t, 0, 0.7)
-    bear = bear3d(480, lerp(420, 620, ei(u)), lerp(0.7, 2.6, ei(u)), -90, t, gait=0.6, run=1.0, roar=1.0, persp=0.0016)
+    bear = bear3d(480, lerp(420, 600, ei(u)), lerp(0.7, 1.9, ei(u)), -90, t, gait=0.6, run=1.0, roar=1.0, persp=0.0016)
     hit = clamp(1 - abs(t - 0.75) / 0.1)
     freeze = ramp(t, 0.85, 1.0)
     bg = f'<g filter="url(#b8)">{forest_back(t)}{pine_row(300, 21, "#1E4A36", 14, 160, 260)}{trail_persp(300)}</g>'
     cam = (0, 40 + kick(t, 0.7, 18, 0.2), 1.3, lerp(0, -6, u))
-    return SS([(bg, 0.4, True), (bear, 1.0, False), (paw(lerp(520, 600, ei(u)), lerp(560, 330, ei(u)), lerp(0.4, 1.3, ei(u)), 15), 1.3, False),
-               ui(flashw(hit) + f'<rect x="-600" y="-600" width="2160" height="1800" fill="#FF2A3A" opacity="{0.35 * freeze:.2f}" style="mix-blend-mode:multiply"/>')], cam)
+    return SS([(bg, 0.4, True), (bear, 1.0, False),
+               ui(claw_swipe(480, 300, ramp(t, 0.7, 1.2), 0.75) + flashw(hit) + f'<rect x="-600" y="-600" width="2160" height="1800" fill="#FF2A3A" opacity="{0.35 * freeze:.2f}" style="mix-blend-mode:multiply"/>')], cam)
 
 
 def stage(t):
@@ -344,8 +339,7 @@ def b23(t, D):
     st = stick(hx - 40 * math.cos(math.radians(ang)), hy - 40 * math.sin(math.radians(ang)), 0.9, ang)
     me = boy(J, "b23", 480, 560, 0.75, L_FOREST)
     cam = (0, 40, lerp(1.2, 1.35, ramp(t, 0, D)), lerp(6, -3, up))
-    return SS([(forest_back(t), 0.2, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.45, True), (trail_persp(300), 0.8, True), (me + st, 1.0, False)], cam,
-              overlay=tag_big("FIGHT BACK", 480, 90, ramp(t, 0.15, 0.45), 60, "#FFE45A"))
+    return SS([(forest_back(t), 0.2, True), (pine_row(300, 21, "#1E4A36", 14, 160, 260), 0.45, True), (trail_persp(300), 0.8, True), (st + me, 1.0, False)], cam)
 
 
 @shot5(B["hit"] - 0.1, "b24", "IMPACT FRAMES: whack, whack, the branch cracks across the black bear's nose; it flinches and backs off.")

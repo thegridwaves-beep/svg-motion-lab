@@ -5,7 +5,7 @@ from wcore import *
 from botfly_mt import fg_hairs, dust, flare, streaks, hstreaks, flashw
 from pose2 import back as back_pose
 
-L_FOREST = Light("brDay", amb=(1.0, 0.97, 0.9), sat=1.0, key="#FFE6B0", key_op=0.35, ang=-55, spread=0.8, shade="#1A2A3A", shade_op=0.32, rim="#FFF4D0", rim_op=0.5, rim_w=7)
+L_FOREST = Light("brDay", amb=(1.0, 0.97, 0.9), sat=1.0, key="#FFE6B0", key_op=0.16, ang=-55, spread=0.8, shade="#1A2A3A", shade_op=0.32, rim="#FFF4D0", rim_op=0.5, rim_w=7)
 L_SHADE = Light("brShade", amb=(0.82, 0.88, 0.95), sat=0.9, key="#FFD890", key_op=0.3, ang=-40, spread=0.8, shade="#0A1A2A", shade_op=0.45, rim="#FFE8B0", rim_op=0.6, rim_w=7)
 SHADE = "#0A0610"
 
@@ -17,7 +17,7 @@ BLACK_BROWN = ("#8A5430", "#5E361C", "#B8804A", "#C8A070")
 
 
 # ------------------------------------------------------------------ 3D bear
-def bear3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, kind="grizzly", fur=None, gait=0.0, run=0.0, roar=0.0,
+def _bear3d_old(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, kind="grizzly", fur=None, gait=0.0, run=0.0, roar=0.0,
            head_dy=0.0, head_dx=0.0, skid=0.0, glow_hump=0.0, blink=0.0, lean=0.0, sil=None, persp=0.0):
     """Model: head at +x, ~300 units nose to tail at s=1, ground at y=0 under the body (oy is the ground point),
     z toward the viewer's left. yaw 0 = side view facing right, -90 = charging head-on at the camera, 90 = walking away.
@@ -364,3 +364,86 @@ def kmh_chip(x, y, val, label_, u, col="#FFFFFF", bg=INK, edge=PINK):
 
 
 TAU = 2 * math.pi
+
+
+# ------------------------------------------------------------------ v2: the smooth lofted bear everywhere (keeps the old call signature)
+R3.YOU.hair = ("#2B1B14", "#1A100B", "#5A4030")          # dark brown fringe in every shot (was reading grey-lavender in daylight)
+_FILL = {GRIZ_DARK: "url(#bearD)", BLACK_BROWN: "url(#bearBr)", GRIZ: None, BLACK: None}
+
+
+def bear3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, kind="grizzly", fur=None, gait=0.0, run=0.0, roar=0.0,
+           head_dy=0.0, head_dx=0.0, skid=0.0, glow_hump=0.0, blink=0.0, lean=0.0, sil=None, persp=0.0):
+    import looks as LK
+    if sil:
+        return _bear3d_old(ox, oy, s, yaw_deg, t, kind, fur, gait, run, roar, head_dy, head_dx, skid, glow_hump, blink, lean, sil, persp)
+    o = LK.bearL(ox, oy, s, yaw_deg, t, kind, _FILL.get(fur), gait, run, roar, persp, glow_hump, blink, skid, head_dx)
+    if head_dy:
+        o = f'<g transform="translate(0 {head_dy * s * 0.3:.1f})">{o}</g>'
+    return LK.rim(o, "W") if kind != "grizzly" else o
+
+
+def bear_face(x, y, s=1.0, t=0.0, blink=0.0, angry=0.0, look=(0.0, 0.0), nose=0.0):
+    """Head-on grizzly portrait for close-ups: dished face, round ears, brow, pale muzzle, wet nose, small hard eyes."""
+    lx, ly = look
+    br = 8 * angry
+    fur = "".join(f'<path d="M{math.cos(a) * 170:.1f} {math.sin(a) * 160 + 10:.1f} l{math.cos(a + 0.3) * 26:.1f} {math.sin(a + 0.3) * 26:.1f}" stroke="{c}" stroke-width="5" stroke-linecap="round" opacity="0.55"/>'
+                  for a, c in [(1.2 + k * 0.33, "#C89A62" if k % 2 else "#4A2C16") for k in range(-16, 3)])
+    eyes = ""
+    for sd in (-1, 1):
+        ex, ey = sd * 62, -32
+        eyes += (f'<ellipse cx="{ex}" cy="{ey + 4}" rx="30" ry="20" fill="#3A2212" opacity="0.7" filter="url(#b3)"/>'
+                 + (f'<path d="M{ex - 18} {ey} Q{ex} {ey + 6} {ex + 18} {ey}" stroke="#120A06" stroke-width="5" fill="none" stroke-linecap="round"/>' if blink > 0.5 else
+                    f'<circle cx="{ex + lx * 5}" cy="{ey + ly * 4}" r="14" fill="#1A0E08"/><circle cx="{ex + lx * 5}" cy="{ey + ly * 4}" r="9" fill="#5A2E14"/>'
+                    f'<circle cx="{ex + lx * 5}" cy="{ey + ly * 4}" r="5.5" fill="#080404"/><circle cx="{ex + lx * 5 - 4}" cy="{ey + ly * 4 - 5}" r="4" fill="#FFF6E6"/>')
+                 + f'<path d="M{ex - 34 * sd * -1 - 0} {ey - 22 + br * (1 if sd < 0 else 1)} Q{ex} {ey - 34 - br * 0.3} {ex + 34 * sd} {ey - 24 - br}" stroke="#3A2210" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.8"/>')
+    ears = "".join(f'<g transform="translate({sd * 128} -118)"><circle r="52" fill="url(#bearG)"/><circle r="30" cy="6" fill="#3A2414"/><circle r="20" cy="10" fill="#5A3A24" opacity="0.6"/></g>' for sd in (-1, 1))
+    tw = 3 * math.sin(t * 11) * nose
+    return (f'<g transform="translate({x:.1f} {y:.1f}) scale({s:.3f})">'
+            f'<ellipse cx="0" cy="250" rx="300" ry="140" fill="#6E4628"/>'                                  # chest/shoulders
+            f'{ears}'
+            f'<path d="M-175 -40 Q-190 -150 -90 -175 Q0 -195 90 -175 Q190 -150 175 -40 Q185 70 120 140 Q60 190 0 192 Q-60 190 -120 140 Q-185 70 -175 -40 Z" fill="url(#bearG)"/>'
+            f'<path d="M-150 -60 Q-160 -140 -70 -160 Q0 -175 70 -160 Q160 -140 150 -60" fill="#C08A54" opacity="0.35" filter="url(#b8)"/>'   # sunlit crown
+            f'{fur}'
+            f'<path d="M-40 -110 Q0 -60 40 -110" stroke="#5A3A20" stroke-width="10" fill="none" opacity="0.5" filter="url(#b3)"/>'        # dished brow
+            f'{eyes}'
+            f'<ellipse cx="0" cy="70" rx="98" ry="78" fill="#C99A64"/><ellipse cx="0" cy="54" rx="80" ry="50" fill="#DDB27A" opacity="0.7" filter="url(#b8)"/>'
+            f'<g transform="translate({tw:.1f} {tw * 0.4:.1f})"><path d="M-46 22 Q-48 -6 0 -8 Q48 -6 46 22 Q40 52 0 58 Q-40 52 -46 22 Z" fill="#1A100C"/>'
+            f'<ellipse cx="-14" cy="6" rx="15" ry="7" fill="#FFFFFF" opacity="0.45"/><ellipse cx="-17" cy="34" rx="8" ry="6" fill="#000"/><ellipse cx="17" cy="34" rx="8" ry="6" fill="#000"/></g>'
+            f'<path d="M0 58 L0 92 M-40 104 Q0 92 40 104" stroke="#3A2214" stroke-width="7" fill="none" stroke-linecap="round"/>'
+            '</g>')
+
+
+def spray_in_hand(x, y, s=1.0, ang=0.0, safety=1.0):
+    """The can gripped in the boy's fist from the side: palm behind, can, four fingers wrapped in front below the label, sleeve."""
+    sk, sk2 = R3.YOU.skin[0], R3.YOU.skin[1]
+    sleeve = (f'<path d="M-46 36 L46 36 L58 330 L-58 330 Z" fill="{TP[0]}"/><path d="M-46 36 L46 36 L48 70 L-48 70 Z" fill="{TP[1]}"/>'
+              + "".join(f'<path d="M{-42 + 12 * k} 40 L{-44 + 12 * k} 68" stroke="{TP[0]}" stroke-width="3" opacity="0.7"/>' for k in range(8)))
+    palm = f'<ellipse cx="-6" cy="8" rx="46" ry="40" fill="{sk2}"/>'
+    fingers = "".join(f'<rect x="-32" y="{-22 + 15 * k}" width="{60 - 4 * k}" height="15" rx="7.5" fill="{sk}" stroke="{sk2}" stroke-width="2"/>' for k in range(4))
+    thumb = f'<path d="M-34 0 Q-44 -26 -14 -30 Q0 -30 2 -22 Q-10 -18 -18 -4 Z" fill="{sk}" stroke="{sk2}" stroke-width="2"/>'
+    can = spray_can(0, 0, 1.0, 0.0, safety)
+    return f'<g transform="translate({x:.1f} {y:.1f}) rotate({ang:.1f}) scale({s:.3f})">{sleeve}{palm}{can}{fingers}{thumb}</g>'
+
+
+def paw(x, y, s=1.0, ang=0.0, col="#6A4426"):
+    """Grizzly paw seen from below: furry foot, dark leathery pad and toe beans, long curved pale claws."""
+    claws = "".join(f'<path d="M{-36 + 18 * k} -50 Q{-40 + 18 * k} -96 {-24 + 18 * k} -122 Q{-28 + 18 * k} -92 {-26 + 18 * k} -50 Z" fill="#EFE4CC" stroke="#B8A888" stroke-width="2"/>' for k in range(5))
+    fur = "".join(f'<path d="M{70 * math.cos(a):.1f} {56 * math.sin(a):.1f} l{12 * math.cos(a):.1f} {12 * math.sin(a):.1f}" stroke="#4A2C16" stroke-width="5" stroke-linecap="round" opacity="0.6"/>' for a in [k * 0.4 for k in range(16)])
+    beans = "".join(f'<ellipse cx="{-36 + 18 * k}" cy="{-34 + 4 * abs(k - 2)}" rx="10" ry="13" fill="#2A1A12"/>' for k in range(5))
+    return (f'<g transform="translate({x:.1f} {y:.1f}) rotate({ang:.1f}) scale({s:.3f})">{claws}'
+            f'<ellipse cx="0" cy="4" rx="74" ry="62" fill="url(#bearG)"/>{fur}'
+            f'<path d="M-40 10 Q-44 -14 0 -16 Q44 -14 40 10 Q36 40 0 44 Q-36 40 -40 10 Z" fill="#2A1A12"/>'
+            f'<ellipse cx="-10" cy="4" rx="14" ry="6" fill="#FFFFFF" opacity="0.12"/>{beans}</g>')
+
+
+def claw_swipe(x, y, u, s=1.0):
+    """Three fresh claw slashes torn across the frame."""
+    if u <= 0:
+        return ""
+    o = ""
+    for k in range(3):
+        L = 380 * min(1, u * 3)
+        o += (f'<path d="M{-190 + 60 * k} {-150 + 40 * k} q{L * 0.5:.0f} {L * 0.35:.0f} {L:.0f} {L * 0.55:.0f}" stroke="#1A0608" stroke-width="30" fill="none" stroke-linecap="round" opacity="0.55"/>'
+              f'<path d="M{-190 + 60 * k} {-150 + 40 * k} q{L * 0.5:.0f} {L * 0.35:.0f} {L:.0f} {L * 0.55:.0f}" stroke="#FF5A5A" stroke-width="12" fill="none" stroke-linecap="round"/>'
+              f'<path d="M{-190 + 60 * k} {-150 + 40 * k} q{L * 0.5:.0f} {L * 0.35:.0f} {L:.0f} {L * 0.55:.0f}" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>')
+    return f'<g transform="translate({x:.1f} {y:.1f}) scale({s:.3f})" opacity="{clamp(2 - u * 2):.2f}">{o}</g>'
