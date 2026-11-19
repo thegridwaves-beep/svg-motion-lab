@@ -63,9 +63,28 @@ def stage(t):
 CS, TIPIN = 1.3, 34                      # croc scale when it holds him; how deep his hand sits in the jaws (local units)
 
 
-def croc_on_arm(t, hx, hy, s=CS, yaw=180, open_=0.16, tug=0.0, roll=0.0, blink=0.0, pitch=14):
-    """Croc (facing left) half out of the water, jaws clamped over the boy's hand/forearm at (hx, hy)."""
-    return croc3d(0, 0, s, yaw, t, open_=open_, roll=roll, sway=0.6, blink=blink, pitch=pitch, anchor=(hx + 30 * tug, hy), tip_in=TIPIN)
+def croc_on_arm(t, hx, hy, s=CS, yaw=180, open_=0.16, tug=0.0, roll=0.0, blink=0.0, pitch=14, arm=True):
+    """Croc (facing left) half out of the water, jaws clamped on the boy's forearm at (hx, hy).
+    The jaws gape exactly as wide as his arm, and his sleeve and fist show between the teeth."""
+    gape = max(open_, 0.3) if arm else open_
+    ax = hx + 30 * tug
+    croc3d(0, 0, s, yaw, t, open_=gape, roll=roll, sway=0.6, blink=blink, pitch=pitch, anchor=(ax, hy), tip_in=TIPIN)
+    inner = ""
+    if arm:
+        tx, ty = LAST["tip"]; gx, gy = LAST["hinge"]
+        dx, dy = gx - tx, gy - ty; L = math.hypot(dx, dy) or 1
+        ang = math.degrees(math.atan2(dy, dx))
+        k = 0.42                                            # fist sits this far from the tip toward the hinge
+        fx, fy = tx + dx * k, ty + dy * k + 2
+        inner = fist(fx, fy, 0.42, ang, sleeve=L * k / 0.42 + 4)
+    return croc3d(0, 0, s, yaw, t, open_=gape, roll=roll, sway=0.6, blink=blink, pitch=pitch, anchor=(ax, hy), tip_in=TIPIN, inner=inner)
+
+
+def held_bottle(hx, hy, s=0.4, ang=160.0):
+    """Bottle gripped round its middle by the hand at (hx, hy) (draw it BEFORE the boy so his mitten wraps it)."""
+    a = math.radians(ang)
+    ox, oy = -(-32) * math.sin(a) * s, (-32) * math.cos(a) * s     # rotated (0, -32)
+    return bottle(hx - ox, hy - oy, s, ang)
 
 
 def to_local(J, wx, wy, x=None, y=None, s=None):
@@ -106,7 +125,7 @@ def c01(t, D):
     rip = "".join(f'<ellipse cx="{hx:.0f}" cy="{WY + 2}" rx="{10 + 30 * ((t * 0.8 + k / 3) % 1):.0f}" ry="{3 + 8 * ((t * 0.8 + k / 3) % 1):.0f}" fill="none" stroke="#E8FFF8" stroke-width="2" opacity="{0.8 * (1 - (t * 0.8 + k / 3) % 1):.2f}"/>' for k in range(3))
     shape = f'<g opacity="0.5" filter="url(#b4)">{croc3d(lerp(1000, 760, u), 480, 0.9, 180, t, sil="#0A2424", sway=0.8)}</g>'
     cam = (lerp(40, 30, u), lerp(-110, 70, u), lerp(1.05, 1.45, u), lerp(-5, 0, u))
-    return SS(river(t, 470) + [(shape, 1.0, False), (water_front(t, WY, 0.3) + rip, 1.0, False), (me + bottle(hx + 4, hy + 22, 0.4, 160), 1.0, False)], cam)
+    return SS(river(t, 470) + [(shape, 1.0, False), (water_front(t, WY, 0.3) + rip, 1.0, False), (held_bottle(hx, hy + 2, 0.4, 168) + me, 1.0, False)], cam)
 
 @shot5(B[(0, 1)] - 0.1, "c02", "WATER LEVEL, SLOW-MO: the surface erupts and the croc launches out jaws wide; the boy jerks back, bottle flying.")
 def c02(t, D):
@@ -117,12 +136,25 @@ def c02(t, D):
     me = boy(J, "c02", 455 - 20 * jerk, 418, 0.42, L_RIVER, side=True)
     hx_, hy_ = held_hand(J, 455 - 20 * jerk, 418, 0.42)
     bite = ramp(t, 0.95, 1.25)
-    cr = croc3d(0, 0, CS * 0.84, 185, t, open_=clamp(rise * 1.4) * (1 - 0.85 * bite), sway=1.0, pitch=28 * rise,
-                anchor=(lerp(760, hx_ + 6, rise), lerp(560, hy_, rise)), tip_in=TIPIN * bite)
-    bt = bottle(lerp(530, 580, jerk), lerp(400, 250, jerk) + 300 * max(0, jerk - 0.6) ** 2, 0.4, 100 + 400 * jerk)
+    gape = 0.75 * clamp(rise * 1.4) * (1 - bite) + 0.3 * bite
+    croc3d(0, 0, CS * 0.84, 185, t, open_=gape, sway=1.0, pitch=18 * rise * (1 - 0.5 * bite),
+           anchor=(lerp(760, hx_ + 6, rise), lerp(560, hy_, rise)), tip_in=TIPIN * bite)
+    inner = ""
+    if bite > 0:
+        tx, ty = LAST["tip"]; gx, gy = LAST["hinge"]
+        dx, dy = gx - tx, gy - ty; L = math.hypot(dx, dy) or 1
+        inner = fist(tx + dx * 0.42, ty + dy * 0.42 + 2, 0.36, math.degrees(math.atan2(dy, dx)), sleeve=L * 0.42 / 0.36 + 4)
+    cr = croc3d(0, 0, CS * 0.84, 185, t, open_=gape, sway=1.0, pitch=18 * rise * (1 - 0.5 * bite),
+                anchor=(lerp(760, hx_ + 6, rise), lerp(560, hy_, rise)), tip_in=TIPIN * bite, inner=inner)
+    fly = ramp(t, 0.42, 1.3)
+    hx0, hy0 = held_hand(crouch_J(1.0), 455, 418, 0.42)
+    if fly <= 0:
+        bt0, bt = held_bottle(hx_, hy_ + 2, 0.4, 168), ""
+    else:
+        bt0, bt = "", bottle(hx0 + 160 * fly, hy0 - 330 * fly + 380 * fly * fly, 0.4, 168 + 520 * fly)
     zu = ei(ramp(t, 1.2, D))
     cam = (lerp(30, 30, zu), lerp(40, 0, zu), lerp(1.15, 1.35, zu), lerp(-6, 0, zu))
-    return SS(river(t, 470) + [(me + bt, 1.0, False), (cr, 1.0, False), (water_front(t, WY + 15, 0.55) + splash(620, WY + 15, u, 1.2), 1.0, False),
+    return SS(river(t, 470) + [(bt0 + me + bt, 1.0, False), (cr, 1.0, False), (water_front(t, WY + 15, 0.55) + splash(620, WY + 15, u, 1.2), 1.0, False),
                                ui(streaks(t, CX, CY, 0.6 * zu))], cam)
 
 @shot5(B[(1, 0)] - 0.1, "c03", "IMPACT FRAME: the jaws slam shut on his forearm. White flash, freeze, the teeth in close-up.")
@@ -292,10 +324,10 @@ def c15(t, D):
     J = reach(J0, ex - 4, ey + 4, sw) if sw > 0.02 else J0 | dict(e1=(-10, -330), h1=(-30, -400))
     me = boy(J, "c15", BOYX, BOYY, BS, L_RIVER, side=True)
     bx, by = held_hand(J | dict(h2=J["h1"]))
-    bt = bottle(bx, by, 0.35, lerp(-60, 90, sw)) if t > 1.0 else ""
+    bt = held_bottle(bx, by, 0.35, lerp(-60, 90, sw)) if t > 1.0 else ""
     stars = "".join(impact_star(ex, ey, clamp((t - h) / 0.3), 0.4) for h in hits if t > h)
     cam = (hx - CX - 10 + kick(t, 0.35, 8) + kick(t, 1.2, 8) + kick(t, 2.1, 8), 0, 1.3, -4)
-    return SS(river(t, 470) + [(me, 1.0, False), (cr, 1.0, False), (water_front(t, WY, 0.55), 1.0, False), (me[:0] + bt + stars, 1.0, False)], cam)
+    return SS(river(t, 470) + [(bt + me, 1.0, False), (cr, 1.0, False), (water_front(t, WY, 0.55), 1.0, False), (stars, 1.0, False)], cam)
 
 
 # ================================================================== the throat flap
@@ -305,7 +337,7 @@ def c16(t, D):
     croc3d(560, 400, 1.6, 180, t, open_=0.3, sway=0.2)
     hx, hy = LAST["hinge"]; tx, ty = LAST["tip"]
     hx, hy = hx - 18, hy + 4
-    arm = fist(hx, hy, 0.62, 180, sleeve=560)
+    arm = fist(hx, hy, 0.62, math.degrees(math.atan2(hy - ty, hx - tx)), sleeve=560)
     cr = croc3d(560, 400, 1.6, 180, t, open_=0.3, sway=0.2, inner=arm)
     arm = ""
     gl = glow(hx + 14, hy, 70, "#FFE45A", 0.55 * ramp(t, 1.0, 1.8), 10)
@@ -451,8 +483,8 @@ def c30(t, D):
     u = eio(ramp(t, 0, D))
     J = crouch_J(0.7)
     me = boy(J, "c30", 420, 390, 0.42, L_RIVER, side=True)
-    hand = (420 + 150 * 0.42, 390 - 150 * 0.42)
-    cr = croc3d(680, 480 - 10 * u, 1.0, 180, t, sway=0.3, eye_glow=u)
-    cam = (40, 50, lerp(1.4, 1.6, u), 0)
-    return SS(river(t) + [(cr, 1.0, False), (water_front(t, WY, 0.6), 1.0, False), (me + bottle(hand[0], hand[1] + 30, 0.4, 70), 1.0, False)], cam,
+    hand = held_hand(J, 420, 390, 0.42)
+    cr = croc3d(590, 478 - 10 * u, 1.0, 180, t, sway=0.3, eye_glow=u)
+    cam = (-10, 50, lerp(1.4, 1.55, u), 0)
+    return SS(river(t) + [(cr, 1.0, False), (water_front(t, WY, 0.6), 1.0, False), (held_bottle(hand[0], hand[1] + 2, 0.4, 168) + me, 1.0, False)], cam,
               overlay=tag_big("WHICH ONE?", 480, 90, ramp(t, 0.2, 0.5), 60, "#FFE45A"))
