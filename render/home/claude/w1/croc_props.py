@@ -53,7 +53,10 @@ def croc_profile(x):
     return -26 + 2 * u, lerp(13, 8, u) * max(tip, 0.25), lerp(24, 11, u) * max(tip, 0.2)
 
 
-def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, walk=0.0, blink=0.0, persp=0.0, small=False, eye_glow=0.0, sil=None, pitch=0.0, anchor=None):
+LAST = {}
+
+
+def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, walk=0.0, blink=0.0, persp=0.0, small=False, eye_glow=0.0, sil=None, pitch=0.0, anchor=None, inner="", tip_in=0.0):
     """Saltwater crocodile as one smooth lofted body (cross-sections joined by hulls), seen from any yaw.
     Snout at +x, ~380 units long at s=1, belly on y=0 (oy), z toward the viewer's left. yaw 0 = side view facing right,
     -90 = head-on. open_ 0..1 jaw gape, roll = death-roll angle (deg), pitch = head-up tilt (deg), anchor = put the jaw tip there."""
@@ -92,7 +95,7 @@ def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, wal
     def K(Z): return 1.0 / max(0.25, 1 + persp * Z)
 
     if anchor is not None:
-        tx, ty, tz = R((148, -26, 0))
+        tx, ty, tz = R((148 - tip_in, -26, 0))
         ox = anchor[0] - (tx * c - tz * si) * s
         oy = anchor[1] - ty * s
 
@@ -162,9 +165,31 @@ def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, wal
         up_f = lambda x: (lambda cy, h, w: (cy - 0.45 * h, 0.6 * h, w))(*croc_profile(x))
         lo_f = lambda x: (lambda cy, h, w: (cy + 0.55 * h, 0.45 * h, 0.94 * w))(*croc_profile(x))
         mouth = [P(jaw((66, AX, 0), 1)), P(jaw((146, AX - 2, 0), 1)), P(jaw((146, AX + 2, 0), -1)), P(jaw((66, AX, 0), -1))]
-        inside = f'<path d="M{" L".join(f"{a:.1f} {b:.1f}" for a, b, _ in mouth)} Z" fill="#B84A5C"/>'
+        inside = f'<path d="M{" L".join(f"{a:.1f} {b:.1f}" for a, b, _ in mouth)} Z" fill="#6A1E2C"/>'
+        U0, U1, L1, L0 = [m[:2] for m in mouth]
+        mix = lambda A, B, k: (A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k)
+        pts = lambda ps: "M" + " L".join(f"{a:.1f} {b:.1f}" for a, b in ps) + " Z"
+        # palate: upper 55% of the gape, ridged; tongue: a rounded pad on the lower jaw
+        pal = [mix(U0, L0, 0.12), mix(U1, L1, 0.06), mix(U1, L1, 0.5), mix(U0, L0, 0.5)]
+        tng = [mix(U0, L0, 0.62), mix(mix(U1, L1, 0.7), mix(U0, L0, 0.7), 0.25), mix(L1, L0, 0.3), mix(U0, L0, 0.92)]
+        inside += f'<path d="{pts(pal)}" fill="#B24E60"/>'
+        for k in (0.3, 0.5, 0.7):
+            r0, r1 = mix(mix(U0, L0, 0.15), mix(U1, L1, 0.08), k), mix(mix(U0, L0, 0.45), mix(U1, L1, 0.45), k)
+            inside += f'<path d="M{r0[0]:.1f} {r0[1]:.1f} L{r1[0]:.1f} {r1[1]:.1f}" stroke="#94374A" stroke-width="{2.2 * s:.1f}" stroke-linecap="round"/>'
+        inside += f'<path d="{pts(tng)}" fill="#D0707E" stroke="#B85464" stroke-width="{1.2 * s:.1f}" stroke-linejoin="round"/>'
+        ma, mb = mix(U0, L0, 0.5), mix(U1, L1, 0.5)
+        inside += f'<path d="M{ma[0]:.1f} {ma[1]:.1f} L{mix(ma, mb, 0.85)[0]:.1f} {mix(ma, mb, 0.85)[1]:.1f}" stroke="#7A2436" stroke-width="{1.6 * s:.1f}" opacity="0.6"/>'
+        thr = P((68, AX, 0)); inside += f'<ellipse cx="{thr[0]:.1f}" cy="{thr[1]:.1f}" rx="{10 * s:.1f}" ry="{14 * s * max(0.3, open_):.1f}" fill="#4A1220" opacity="0.7"/><ellipse cx="{thr[0]:.1f}" cy="{thr[1]:.1f}" rx="{5 * s:.1f}" ry="{9 * s * max(0.3, open_):.1f}" fill="#2A0810"/>'
+        # far-side teeth (smaller, in shade), seen through the open mouth
+        for x in range(76, 146, 6):
+            cy_, h_, w_ = croc_profile(x)
+            for prt, dy0, dy1 in ((1, 1, 5), (-1, 3, -2)):
+                q0 = P(jaw((x, cy_ + dy0, 0), prt)); q1 = P(jaw((x + 1.5, cy_ + dy1, 0), prt))
+                inside += f'<path d="M{q0[0] - 1.2 * s:.1f} {q0[1]:.1f} L{q1[0]:.1f} {q1[1]:.1f} L{q0[0] + 1.2 * s:.1f} {q0[1]:.1f} Z" fill="#D6CFB4"/>'
+        inside += inner
         lo, _ = loft(xs_head, BELLY if not sil else TOP, lo_f, -1); upj, _ = loft(xs_head, FILL, up_f, 1)
-        head = lo + inside + upj
+        lower_side, _ = loft(xs_head, FILL, lambda x: (lambda cy, h, w: (cy + 0.35 * h, 0.4 * h, 0.97 * w))(*croc_profile(x)), -1)
+        head = lo + lower_side + inside + upj
     else:
         head = ""
     # teeth and the jaw line on the side facing the camera
@@ -173,6 +198,10 @@ def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, wal
     if roll and abs(((roll + 90) % 360) - 180) < 90:
         zside = -zside
     det = []
+    if open_ > 0.03:
+        for prt, dy in ((1, 2), (-1, -1)):
+            gl = [P(jaw((x, croc_profile(x)[0] + dy, zside * croc_profile(x)[2] * 0.93), prt)) for x in range(70, 146, 4)]
+            det.append(f'<path d="M{" L".join(f"{a:.1f} {b:.1f}" for a, b, _ in gl)}" stroke="#D8707E" stroke-width="{4.2 * s:.1f}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>')
     jl = []
     for x in range(68, 148, 3):
         cy, h, w = croc_profile(x)
@@ -208,6 +237,9 @@ def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, wal
                   f'<circle cx="{e[0] - 1.6 * k:.1f}" cy="{e[1] - 1.7 * k:.1f}" r="{1.2 * k:.1f}" fill="#FFFFFF" opacity="0.85"/>')
         eyes.append((e[2], o))
     eyes.sort(key=lambda q: -q[0])
+    LAST.clear()
+    LAST.update(tip=P(jaw((146, AX, 0), 0))[:2], eye=P(jaw((82, -46, 12 * zside), part))[:2], hinge=P((66, AX, 0))[:2],
+                snout=P(jaw((120, -34, 0), part))[:2], lowtip=P(jaw((146, AX + 2, 0), -1))[:2])
     far = "".join(v for z, v in sorted(layers, key=lambda q: -q[0]) if z > zb_)
     nearl = "".join(v for z, v in sorted(layers, key=lambda q: -q[0]) if z <= zb_)
     shadow = f'<ellipse cx="{ox:.1f}" cy="{oy + 2:.1f}" rx="{(190 * abs(c) + 70 * abs(si)) * s:.1f}" ry="{12 * s:.1f}" fill="#05030F" opacity="{0.0 if sil else 0.25:.2f}" filter="url(#b6)"/>'
@@ -362,3 +394,47 @@ def arm_pulled_J(pull=0.0, face=None):
              e2=(75, -270), h2=(150, -170), e1=(40, -300), h1=(110, -320),
              face=face or fc(open=1.4, lift=1.0, knit=0.9, mouth="grit", look=(1, 0)))
     return J
+
+
+# ------------------------------------------------------------------ hands (v2: rounded, with sleeve and knuckles)
+def fist(x, y, s=1.0, ang=0.0, thumb_out=False, sleeve=170):
+    """Side-view fist at (x, y) pointing along +x (rotate with ang), forearm + sleeve trailing back along -x."""
+    sk, sk2, sk3 = R3.YOU.skin
+    arm = (f'<path d="M{-sleeve} -20 L-30 -18 L-30 18 L{-sleeve} 22 Z" fill="{TP[0]}"/>'
+           f'<rect x="-46" y="-21" width="18" height="42" rx="6" fill="{TP[1]}"/>'
+           + "".join(f'<path d="M{-44 + 4 * k} -18 L{-44 + 4 * k} 18" stroke="{TP[0]}" stroke-width="1.6" opacity="0.6"/>' for k in range(4))
+           + f'<path d="M-30 -14 L-8 -16 L-8 16 L-30 14 Z" fill="{sk2}"/>')
+    hand = (f'<path d="M-12 -26 Q20 -30 30 -14 Q36 0 30 16 Q20 30 -12 26 Q-20 0 -12 -26 Z" fill="{sk}"/>'
+            + "".join(f'<path d="M{18 + 4 * abs(k - 1.5):.0f} {-19 + 12 * k} q8 3 0 10" stroke="{sk2}" stroke-width="2.4" fill="none" stroke-linecap="round"/>' for k in range(4))
+            + f'<ellipse cx="6" cy="-16" rx="10" ry="5" fill="{sk3}" opacity="0.45"/>')
+    th = (f'<path d="M-6 -22 Q14 -40 46 -36 Q52 -32 46 -28 Q20 -26 4 -12 Z" fill="{sk}" stroke="{sk2}" stroke-width="2"/>' if thumb_out else
+          f'<path d="M-8 -20 Q8 -30 20 -24 Q24 -18 16 -14 Q4 -14 -4 -8 Z" fill="{sk}" stroke="{sk2}" stroke-width="2"/>')
+    return f'<g transform="translate({x:.1f} {y:.1f}) rotate({ang:.1f}) scale({s:.3f})">{arm}{hand}{th}</g>'
+
+
+def hands_on_snout(x, y, s=1.0, t=0.0, depth=26.0, gap=34.0):
+    """Two hands clamping a snout whose top edge runs through (x, y): arms come down from the upper left,
+    the back of each hand rests on top, the fingers wrap down the near side (depth = snout height in px)."""
+    sk, sk2, sk3 = R3.YOU.skin
+    o = ""
+    for k, dx in enumerate((-gap, 0.0)):
+        hx = x + dx * s
+        sq = 1.5 * math.sin(t * 9 + k)                 # squeeze tremor
+        ax0, ay0 = hx - 150 * s, y - 210 * s           # forearm start (off toward the boy)
+        o += (f'<path d="M{ax0:.1f} {ay0:.1f} Q{hx - 60 * s:.1f} {y - 120 * s:.1f} {hx - 14 * s:.1f} {y - 26 * s:.1f}" stroke="{TP[0]}" stroke-width="{40 * s:.1f}" fill="none" stroke-linecap="round"/>'
+              f'<path d="M{ax0 + 8 * s:.1f} {ay0 - 6 * s:.1f} Q{hx - 56 * s:.1f} {y - 128 * s:.1f} {hx - 18 * s:.1f} {y - 36 * s:.1f}" stroke="{TP[2]}" stroke-width="{6 * s:.1f}" fill="none" opacity="0.35"/>'
+              f'<path d="M{hx - 34 * s:.1f} {y - 48 * s:.1f} L{hx - 2 * s:.1f} {y - 26 * s:.1f}" stroke="{TP[1]}" stroke-width="{16 * s:.1f}" stroke-linecap="round"/>')
+        # back of the hand lying across the top of the snout
+        o += (f'<path d="M{hx - 22 * s:.1f} {y - 22 * s:.1f} Q{hx + 4 * s:.1f} {y - 30 * s:.1f} {hx + 30 * s:.1f} {y - 8 * s:.1f} '
+              f'L{hx + 30 * s:.1f} {y + 2:.1f} L{hx - 24 * s:.1f} {y + 2:.1f} Z" fill="{sk}" stroke="{sk2}" stroke-width="{2 * s:.1f}"/>')
+        # four fingers curling down over the near side
+        for f in range(4):
+            fx = hx - 16 * s + f * 13 * s
+            L = depth * (0.72 + 0.12 * math.sin(f * 1.7)) + sq
+            o += (f'<path d="M{fx:.1f} {y - 6 * s:.1f} L{fx:.1f} {y + L:.1f}" stroke="{sk2}" stroke-width="{12.5 * s:.1f}" stroke-linecap="round"/>'
+                  f'<path d="M{fx:.1f} {y - 6 * s:.1f} L{fx:.1f} {y + L - 1:.1f}" stroke="{sk}" stroke-width="{10 * s:.1f}" stroke-linecap="round"/>'
+                  f'<path d="M{fx - 3 * s:.1f} {y + L * 0.45:.1f} q{3 * s:.1f} {2 * s:.1f} {6 * s:.1f} 0" stroke="{sk2}" stroke-width="{1.4 * s:.1f}" fill="none"/>')
+        # thumb pressing on top
+        o += f'<path d="M{hx - 20 * s:.1f} {y - 18 * s:.1f} Q{hx - 8 * s:.1f} {y - 36 * s:.1f} {hx + 16 * s:.1f} {y - 30 * s:.1f}" stroke="{sk2}" stroke-width="{12 * s:.1f}" stroke-linecap="round" fill="none"/>'
+        o += f'<path d="M{hx - 20 * s:.1f} {y - 18 * s:.1f} Q{hx - 8 * s:.1f} {y - 36 * s:.1f} {hx + 16 * s:.1f} {y - 30 * s:.1f}" stroke="{sk}" stroke-width="{9.5 * s:.1f}" stroke-linecap="round" fill="none"/>'
+    return o
