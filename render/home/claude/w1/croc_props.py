@@ -224,10 +224,24 @@ def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, wal
     nk = P(jaw((143, -33, 0), part))
     det.append(f'<ellipse cx="{nk[0]:.1f}" cy="{nk[1]:.1f}" rx="{7 * s:.1f}" ry="{4 * s:.1f}" fill="{TOP}"/><circle cx="{nk[0] - 2 * s:.1f}" cy="{nk[1] - 1 * s:.1f}" r="{1.3 * s:.1f}" fill="#1A2010"/><circle cx="{nk[0] + 2 * s:.1f}" cy="{nk[1] - 1 * s:.1f}" r="{1.3 * s:.1f}" fill="#1A2010"/>')
     eyes = []
+    zs0 = 1 if c < 0 else -1                                   # z side toward the camera before the roll
+
+    def facing(side):
+        """How much this spot on top of the head faces the viewer after the roll: >0 visible, <0 hidden under the body."""
+        ny, nz = -1.0, 0.6 * side
+        y2, z2 = ny * cr_ - nz * sr_, ny * sr_ + nz * cr_
+        return -y2 + 0.9 * z2 * zs0 * abs(c)
+
+    nv = clamp((facing(0) - 0.25) / 0.3)
+    if nv < 1:
+        det[-1] = f'<g opacity="{nv:.2f}">{det[-1]}</g>' if nv > 0 else ""
     for side in (-1, 1):
+        vis = clamp((facing(side) - 0.25) / 0.3)
+        if vis <= 0:
+            continue
         bump = P(jaw((80, -42, side * 12), part)); e = P(jaw((82, -46, side * 12), part))
         k = s * K(e[2])
-        o = f'<ellipse cx="{bump[0]:.1f}" cy="{bump[1]:.1f}" rx="{8.5 * k:.1f}" ry="{6.5 * k:.1f}" fill="{TOP}"/>'
+        o = f'<g opacity="{vis:.2f}"><ellipse cx="{bump[0]:.1f}" cy="{bump[1]:.1f}" rx="{8.5 * k:.1f}" ry="{6.5 * k:.1f}" fill="{TOP}"/>'
         if blink > 0.5:
             o += f'<path d="M{e[0] - 5 * k:.1f} {e[1]:.1f} L{e[0] + 5 * k:.1f} {e[1]:.1f}" stroke="#1A2410" stroke-width="{2 * k:.1f}"/>'
         else:
@@ -235,7 +249,7 @@ def croc3d(ox, oy, s=1.0, yaw_deg=0.0, t=0.0, open_=0.0, roll=0.0, sway=0.3, wal
             o += (f'<ellipse cx="{e[0]:.1f}" cy="{e[1]:.1f}" rx="{5 * k:.1f}" ry="{4.4 * k:.1f}" fill="#E8C83A"/>'
                   f'<ellipse cx="{e[0]:.1f}" cy="{e[1]:.1f}" rx="{1.1 * k:.1f}" ry="{3.9 * k:.1f}" fill="#120A04"/>'
                   f'<circle cx="{e[0] - 1.6 * k:.1f}" cy="{e[1] - 1.7 * k:.1f}" r="{1.2 * k:.1f}" fill="#FFFFFF" opacity="0.85"/>')
-        eyes.append((e[2], o))
+        eyes.append((e[2], o + "</g>"))
     eyes.sort(key=lambda q: -q[0])
     LAST.clear()
     LAST.update(tip=P(jaw((146, AX, 0), 0))[:2], eye=P(jaw((82, -46, 12 * zside), part))[:2], hinge=P((66, AX, 0))[:2],
