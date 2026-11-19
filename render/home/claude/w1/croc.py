@@ -213,13 +213,16 @@ def c08(t, D):
 def c09(t, D):
     u = ramp(t, 0, D)
     roll = 360 * 2.2 * u
-    tip = (lerp(400, 430, u), lerp(250, 400, eio(u)))
-    cr = croc3d(0, 0, 0.75, 170, t, open_=0.1, roll=roll, sway=1.0, anchor=tip, tip_in=14)
+    tip = (lerp(380, 420, u), lerp(250, 400, eio(u)))
+    cr = croc3d(0, 0, 1.1, 170, t, open_=0.12, roll=roll, sway=1.0, anchor=tip, tip_in=22)
     tx, ty = tip
-    sw = 10 * math.sin(t * 8)
-    sleeve = (f'<path d="M{tx + 4:.0f} {ty:.0f} Q{tx - 60 + sw:.0f} {ty - 160:.0f} {tx - 40 + sw:.0f} {ty - 420:.0f}" stroke="{TP[0]}" stroke-width="26" fill="none" stroke-linecap="round"/>'
-              f'<path d="M{tx + 4:.0f} {ty:.0f} Q{tx - 60 + sw:.0f} {ty - 160:.0f} {tx - 40 + sw:.0f} {ty - 420:.0f}" stroke="{TP[2]}" stroke-width="5" fill="none" opacity="0.35"/>')
-    cam = (0, 40, lerp(1.2, 1.35, u), -40 * u)
+    sw = 14 * math.sin(t * 8)
+    arm_d = f'M{tx + 6:.0f} {ty:.0f} Q{tx - 70 + sw:.0f} {ty - 170:.0f} {tx - 50 + sw:.0f} {ty - 460:.0f}'
+    sleeve = (f'<path d="{arm_d}" stroke="{TP[1]}" stroke-width="34" fill="none" stroke-linecap="round"/>'
+              f'<path d="{arm_d}" stroke="{TP[0]}" stroke-width="28" fill="none" stroke-linecap="round"/>'
+              f'<path d="{arm_d}" stroke="{TP[2]}" stroke-width="6" fill="none" opacity="0.35" transform="translate(-6 0)"/>'
+              + "".join(f'<circle cx="{tx - 40 + 12 * math.sin(t * 5 + k) - 6 * k:.0f}" cy="{ty - 60 - ((t * 140 + k * 70) % 380):.0f}" r="{4 + k % 3 * 2}" fill="none" stroke="#9AD8E8" stroke-width="2" opacity="0.6"/>' for k in range(6)))
+    cam = (tx - CX + 50, ty - CY + 10, lerp(1.25, 1.35, u), -25 * u)
     return SS([(underwater_bg(t), 0.4, False), (sleeve + cr, 1.0, False), (bubbles2(t, 480, 520, 24, 6, 160, 240), 1.2, False)], cam, lights=(L_UNDER,))
 
 @shot5(B[(4, 0)] - 0.1, "c10", "SMASH: the boy flops flat on the mud, eyes shut, playing dead; a giant red X slams over him. DON'T PLAY DEAD.")
@@ -397,7 +400,7 @@ def c25(t, D):
     sx, sy = LAST["snout"]; lx, ly = LAST["lowtip"]
     hands = hands_on_snout(sx + 6, sy + 2, 1.0, t, depth=max(14, ly - sy - 2), gap=36)
     strain = "".join(f'<path d="M{sx + 10 * k:.0f} {sy - 30 - 6 * abs(math.sin(t * 9 + k)):.0f} l0 -10" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.7"/>' for k in (-1, 0, 1))
-    cam = (sx - CX - 10 + wig, sy - CY + 10, lerp(1.6, 1.75, u), wig * 0.3)
+    cam = (sx - CX - 10 + wig, sy - CY - 50, lerp(1.6, 1.75, u), wig * 0.3)
     return SS(river(t, 1100) + [(cr + hands + strain, 1.0, False)], cam, overlay=tag_big("HELD SHUT", 480, 90, ramp(t, 0.6, 0.9), 64, "#FFE45A"))
 
 @shot5(B[(9, 0)] - 0.1, "c26", "WHIP PAN to the riverbank, wide and calm; light glinting off the water.")

@@ -421,9 +421,10 @@ def hands_on_snout(x, y, s=1.0, t=0.0, depth=26.0, gap=34.0):
         hx = x + dx * s
         sq = 1.5 * math.sin(t * 9 + k)                 # squeeze tremor
         ax0, ay0 = hx - 150 * s, y - 210 * s           # forearm start (off toward the boy)
-        o += (f'<path d="M{ax0:.1f} {ay0:.1f} Q{hx - 60 * s:.1f} {y - 120 * s:.1f} {hx - 14 * s:.1f} {y - 26 * s:.1f}" stroke="{TP[0]}" stroke-width="{40 * s:.1f}" fill="none" stroke-linecap="round"/>'
-              f'<path d="M{ax0 + 8 * s:.1f} {ay0 - 6 * s:.1f} Q{hx - 56 * s:.1f} {y - 128 * s:.1f} {hx - 18 * s:.1f} {y - 36 * s:.1f}" stroke="{TP[2]}" stroke-width="{6 * s:.1f}" fill="none" opacity="0.35"/>'
-              f'<path d="M{hx - 34 * s:.1f} {y - 48 * s:.1f} L{hx - 2 * s:.1f} {y - 26 * s:.1f}" stroke="{TP[1]}" stroke-width="{16 * s:.1f}" stroke-linecap="round"/>')
+        o += (f'<path d="M{ax0:.1f} {ay0:.1f} Q{hx - 60 * s:.1f} {y - 120 * s:.1f} {hx - 14 * s:.1f} {y - 26 * s:.1f}" stroke="{TP[1] if k == 0 else TP[0]}" stroke-width="{27 * s:.1f}" fill="none" stroke-linecap="round"/>'
+              f'<path d="M{ax0 + 6 * s:.1f} {ay0 - 4 * s:.1f} Q{hx - 58 * s:.1f} {y - 126 * s:.1f} {hx - 20 * s:.1f} {y - 40 * s:.1f}" stroke="{TP[2]}" stroke-width="{4 * s:.1f}" fill="none" opacity="0.4"/>'
+              f'<path d="M{hx - 26 * s:.1f} {y - 52 * s:.1f} L{hx - 8 * s:.1f} {y - 34 * s:.1f}" stroke="{TP[1]}" stroke-width="{12 * s:.1f}" stroke-linecap="round"/>'
+              f'<path d="M{hx - 16 * s:.1f} {y - 40 * s:.1f} L{hx - 4 * s:.1f} {y - 22 * s:.1f}" stroke="{sk2}" stroke-width="{16 * s:.1f}" stroke-linecap="round"/>')
         # back of the hand lying across the top of the snout
         o += (f'<path d="M{hx - 22 * s:.1f} {y - 22 * s:.1f} Q{hx + 4 * s:.1f} {y - 30 * s:.1f} {hx + 30 * s:.1f} {y - 8 * s:.1f} '
               f'L{hx + 30 * s:.1f} {y + 2:.1f} L{hx - 24 * s:.1f} {y + 2:.1f} Z" fill="{sk}" stroke="{sk2}" stroke-width="{2 * s:.1f}"/>')
