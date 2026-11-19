@@ -394,8 +394,8 @@ def c20b(t, D):
 
 @shot5(B[(8, 0)] - 0.1, "c21", "TURNTABLE: the croc revolves on a dark stage, jaws gaping. THE TWIST.")
 def c21(t, D):
-    cr = croc3d(480, 360, 1.3, 150 + 60 * t, t, open_=0.6)
-    return SS([(stage(t), 0.4, True), (cr, 1.0, False)], (0, 40, 1.05, 0), lights=(), overlay=tag_big("THE TWIST", 480, 90, ramp(t, 0.05, 0.3), 62, "#FFE45A"))
+    cr = croc3d(520, 360, 1.1, 150 + 60 * t, t, open_=0.6)
+    return SS([(stage(t), 0.4, True), (cr, 1.0, False)], (-50, 30, 1.25, 0), lights=(), overlay=tag_big("THE TWIST", 480, 90, ramp(t, 0.05, 0.3), 62, "#FFE45A"))
 
 
 @shot5(B[(8, 1)] - 0.1, "c22", "SLOW-MO CLOSE-UP: the jaws slam shut, huge red arrows pressing down. CLOSING: MASSIVE.")
