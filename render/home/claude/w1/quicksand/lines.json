@@ -1,0 +1,86 @@
+{
+ "lines": [
+  {
+   "i": 0,
+   "speaker": "v",
+   "text": "[urgently] You're crossing a beach at low tide... and your legs sink into the sand.",
+   "file": "/home/claude/w1/quicksand/vo/00.wav",
+   "dur": 3.728,
+   "start": 0.25,
+   "end": 3.978
+  },
+  {
+   "i": 1,
+   "speaker": "v",
+   "text": "[ominously] It's quicksand. And it won't let go.",
+   "file": "/home/claude/w1/quicksand/vo/01.wav",
+   "dur": 3.277,
+   "start": 4.328,
+   "end": 7.605
+  },
+  {
+   "i": 2,
+   "speaker": "v",
+   "text": "[building] Your instinct says yank your leg out. Don't. Pulling one foot out fast takes about as much force as lifting a car.",
+   "file": "/home/claude/w1/quicksand/vo/02.wav",
+   "dur": 7.096,
+   "start": 8.055,
+   "end": 15.151
+  },
+  {
+   "i": 3,
+   "speaker": "v",
+   "text": "[urgently] And don't let a friend haul you out either. The sand holds on so hard, they could badly hurt you.",
+   "file": "/home/claude/w1/quicksand/vo/03.wav",
+   "dur": 5.216,
+   "start": 15.551,
+   "end": 20.767
+  },
+  {
+   "i": 4,
+   "speaker": "v",
+   "text": "[curious] Here's what the movies get wrong: you can't sink all the way under. Quicksand is about twice as dense as your body, so you float, roughly waist deep.",
+   "file": "/home/claude/w1/quicksand/vo/04.wav",
+   "dur": 8.458,
+   "start": 21.217,
+   "end": 29.675
+  },
+  {
+   "i": 5,
+   "speaker": "v",
+   "text": "[dryly] So the sand isn't what kills you. [short pause] [ominously] On a beach... the tide is.",
+   "file": "/home/claude/w1/quicksand/vo/05.wav",
+   "dur": 4.638,
+   "start": 30.175,
+   "end": 34.812
+  },
+  {
+   "i": 6,
+   "speaker": "v",
+   "text": "[confident] The move: stop struggling. Wiggle your legs slowly, in small circles. That lets water seep in and loosens the sand around you.",
+   "file": "/home/claude/w1/quicksand/vo/06.wav",
+   "dur": 7.867,
+   "start": 35.412,
+   "end": 43.279
+  },
+  {
+   "i": 7,
+   "speaker": "v",
+   "text": "[confident] Then lean back, spread your arms, and let your body float on top. Inch by inch, work your way to firm ground.",
+   "file": "/home/claude/w1/quicksand/vo/07.wav",
+   "dur": 6.733,
+   "start": 43.629,
+   "end": 50.362
+  },
+  {
+   "i": 8,
+   "speaker": "v",
+   "text": "[curious] So... would you have kept pulling, or leaned back?",
+   "file": "/home/claude/w1/quicksand/vo/08.wav",
+   "dur": 3.575,
+   "start": 50.962,
+   "end": 54.537
+  }
+ ],
+ "total": 55.937
+}
