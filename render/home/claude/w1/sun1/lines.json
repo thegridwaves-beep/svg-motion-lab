@@ -1,0 +1,59 @@
+{
+ "lines": [
+  {
+   "i": 0,
+   "speaker": "v",
+   "text": "[ominously] The Sun just vanished. [short pause] And you have no idea.",
+   "file": "/home/claude/w1/sun1/vo/00.wav",
+   "dur": 4.007,
+   "start": 0.25,
+   "end": 4.257
+  },
+  {
+   "i": 1,
+   "speaker": "v",
+   "text": "[curious] Its light takes about eight minutes to reach you... so the sky stays bright. Even its pull on Earth keeps going, for eight more minutes.",
+   "file": "/home/claude/w1/sun1/vo/01.wav",
+   "dur": 7.711,
+   "start": 4.557,
+   "end": 12.268
+  },
+  {
+   "i": 2,
+   "speaker": "v",
+   "text": "[urgently] Then, at minute eight... the sky goes black.",
+   "file": "/home/claude/w1/sun1/vo/02.wav",
+   "dur": 2.965,
+   "start": 12.618,
+   "end": 15.583
+  },
+  {
+   "i": 3,
+   "speaker": "v",
+   "text": "[ominously] Earth stops circling, and flies off in a straight line into the dark. The Moon goes dark too. It only ever shone with sunlight.",
+   "file": "/home/claude/w1/sun1/vo/03.wav",
+   "dur": 7.889,
+   "start": 15.983,
+   "end": 23.872
+  },
+  {
+   "i": 4,
+   "speaker": "v",
+   "text": "[building] Within a week, the whole planet drops below zero Fahrenheit. Within a year... minus one hundred.",
+   "file": "/home/claude/w1/sun1/vo/04.wav",
+   "dur": 6.399,
+   "start": 24.272,
+   "end": 30.671
+  },
+  {
+   "i": 5,
+   "speaker": "v",
+   "text": "[urgently] So where do you run? [short pause] Part two, tomorrow. Follow... or freeze.",
+   "file": "/home/claude/w1/sun1/vo/05.wav",
+   "dur": 4.715,
+   "start": 31.121,
+   "end": 35.836
+  }
+ ],
+ "total": 37.236
+}
