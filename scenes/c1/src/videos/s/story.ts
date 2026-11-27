@@ -65,7 +65,7 @@ export const SHOTS: ShotDef[] = [
     keys: [{ t: 3.15, pos: [0.5, 1.85, 34.6], look: [1.6, 1.5, 30.2], fov: 34 }] },
   // 3 establishing: the harbour, the plaza, the giant tank; crane up "five stories tall"
   { id: 3, a: F(5.0), b: F(10.6), light: "day", tau: before, cInf: 0, push: 0.0015, sunAz: 110,
-    keys: [{ t: 5.0, pos: [14, 3.2, 26], look: [-8, 6, -30], fov: 42 }, { t: 7.5, dur: 1.4, pos: [10, 9, 12], look: [-10, 10.5, -32], fov: 44 }] },
+    keys: [{ t: 5.0, pos: [0.6, 3.4, 30], look: [-8, 6, -30], fov: 42 }, { t: 7.5, dur: 1.4, pos: [10, 9, 12], look: [-10, 10.5, -32], fov: 44 }] },
   // 4 leaks + painted brown + the boss whistling
   { id: 4, a: F(10.6), b: F(15.27), light: "day", tau: before, cInf: 9, push: 0.002, paint: (t) => smooth((t - 12.1) / 1.4), sunAz: 150,
     keys: [{ t: 10.6, pos: [7.0, 8.6, -2], look: onT(0, 5.5, 0), fov: 44 }, { t: 13.7, dur: 0.8, pos: onT(9.5, 1.9, 1.2), look: onT(2.6, 1.6, 0), fov: 38 }] },
@@ -86,8 +86,8 @@ export const SHOTS: ShotDef[] = [
   { id: 9, a: F(32.93), b: F(36.27), light: "day", tau: () => 45, cInf: 12, push: 0.0025, panels: () => 1,
     keys: [{ t: 32.93, pos: [1.2, 2.7, 33.8], look: [0.2, 1.3, 24.0], fov: 40 }] },
   // 10 evening: it gets thicker as it cools, the street turns to glue
-  { id: 10, a: F(36.27), b: F(42.6), light: "golden", tau: () => 400, cInf: 6, push: 0.0018, panels: () => 1,
-    keys: [{ t: 36.27, pos: [2.5, 2.4, 33], look: [0.0, 1.5, 25], fov: 40 }, { t: 39.0, dur: 1.2, pos: [-2.5, 6.5, 42], look: [0, 1.0, 20], fov: 44 }] },
+  { id: 10, a: F(36.27), b: F(42.6), light: "golden", tau: () => 400, cInf: 6, push: 0.0018, panels: () => 1, sunAz: 0, sunEl: 13,
+    keys: [{ t: 36.27, pos: [0.9, 2.4, 33.5], look: [0.0, 1.5, 25], fov: 40 }, { t: 39.0, dur: 1.2, pos: [-2.5, 6.5, 42], look: [0, 1.0, 20], fov: 44 }] },
   // 11 the harbour stayed brown until summer
   { id: 11, a: F(42.6), b: F(46.67), light: "golden", tau: () => 500, cInf: 0, push: 0.0015, panels: () => 1, brown: true,
     keys: [{ t: 42.6, pos: [17, 3.2, -41], look: [-8, -0.8, -72], fov: 46 }] },
@@ -96,7 +96,7 @@ export const SHOTS: ShotDef[] = [
     keys: [{ t: 46.67, pos: onT(9.0, 1.75, -1.2), look: onT(4.6, 1.55, 0.6), fov: 36 }] },
   // 13 decades later, hot summer days: the neighbourhood still smells sweet
   { id: 13, a: F(50.67), b: TOTAL, light: "day", tau: () => 1e4, cInf: 9, push: 0.0022, clean: true, sunEl: 62,
-    keys: [{ t: 50.67, pos: [2.2, 1.7, 33.5], look: [0.4, 1.55, 28.6], fov: 38 }, { t: 53.0, dur: 2.2, pos: [3.6, 2.6, 37], look: [0.4, 2.2, 28.6], fov: 40 }] },
+    keys: [{ t: 50.67, pos: [2.2, 1.7, 33.5], look: [0.4, 1.55, 28.6], fov: 38 }, { t: 53.0, dur: 2.2, pos: [1.6, 2.5, 36.2], look: [0.4, 2.1, 28.6], fov: 40 }] },
 ];
 export const XFADE: Record<number, number> = { 3: 6, 10: 10, 11: 10, 12: 8, 13: 10 };
 export const FLASH_AT = F(3.15);

@@ -18,6 +18,9 @@ on:
       conc:
         description: "renderer concurrency per job"
         default: "2"
+      ranges:
+        description: "optional frame ranges a-b,c-d (inclusive); empty = 0..frames-1"
+        default: ""
 
 permissions:
   contents: write
@@ -55,12 +58,26 @@ jobs:
           CHROME: /usr/bin/google-chrome
         run: |
           set -e
-          N=${{ github.event.inputs.chunks }}; I=${{ matrix.chunk }}; F=${{ github.event.inputs.frames }}
-          A=$(( F * I / N )); B=$(( F * (I + 1) / N - 1 ))
-          echo "chunk $I: frames $A -> $B"
           mkdir -p /tmp/out
-          O=/tmp/out/part$(printf %03d $I).mp4
-          node scripts/render.mjs $O $A $B ${{ github.event.inputs.conc }} || node scripts/render.mjs $O $A $B 1
+          python3 - > runs.txt <<'PY'
+          n=${{ github.event.inputs.chunks }}; i=${{ matrix.chunk }}; F=${{ github.event.inputs.frames }}; R="${{ github.event.inputs.ranges }}".strip()
+          fr=[]
+          if R:
+              for p in R.split(","):
+                  a,b=map(int,p.split("-")); fr+=list(range(a,b+1))
+          else: fr=list(range(F))
+          L=len(fr); mine=fr[L*i//n:L*(i+1)//n]
+          runs=[]
+          for f in mine:
+              if runs and f==runs[-1][1]+1: runs[-1][1]=f
+              else: runs.append([f,f])
+          for a,b in runs: print(a,b)
+          PY
+          cat runs.txt
+          while read A B; do
+            O=/tmp/out/seg$(printf %05d $A).mp4
+            node scripts/render.mjs $O $A $B ${{ github.event.inputs.conc }} || node scripts/render.mjs $O $A $B 1
+          done < runs.txt
       - uses: actions/upload-artifact@v4
         with:
           name: part-${{ matrix.chunk }}
