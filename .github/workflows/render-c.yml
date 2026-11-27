@@ -1,0 +1,99 @@
+name: render-c
+
+on:
+  workflow_dispatch:
+    inputs:
+      proj:
+        description: "project folder under scenes/"
+        default: "c1"
+      chunks:
+        description: "parallel jobs"
+        default: "20"
+      frames:
+        description: "total frames"
+        default: "1820"
+      name:
+        description: "output name"
+        default: "clips"
+      conc:
+        description: "renderer concurrency per job"
+        default: "2"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.p.outputs.matrix }}
+    steps:
+      - id: p
+        run: |
+          N=${{ github.event.inputs.chunks }}
+          echo "matrix={\"chunk\":[$(seq -s, 0 $((N-1)))]}" >> "$GITHUB_OUTPUT"
+
+  render:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        working-directory: scenes/${{ github.event.inputs.proj }}
+        run: npm install --no-audit --no-fund --loglevel=error
+      - name: Render
+        working-directory: scenes/${{ github.event.inputs.proj }}
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: |
+          set -e
+          N=${{ github.event.inputs.chunks }}; I=${{ matrix.chunk }}; F=${{ github.event.inputs.frames }}
+          A=$(( F * I / N )); B=$(( F * (I + 1) / N - 1 ))
+          echo "chunk $I: frames $A -> $B"
+          mkdir -p /tmp/out
+          O=/tmp/out/part$(printf %03d $I).mp4
+          node scripts/render.mjs $O $A $B ${{ github.event.inputs.conc }} || node scripts/render.mjs $O $A $B 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: part-${{ matrix.chunk }}
+          path: /tmp/out/*.mp4
+          retention-days: 1
+
+  pack:
+    needs: render
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: part-*
+          merge-multiple: true
+          path: clips
+      - name: Encrypt and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          mkdir -p out
+          echo "::notice title=clips::$(ls clips | wc -l) clips"
+          tar -cf c.tar -C clips .
+          openssl rand -hex 32 > k.txt
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in c.tar -out out/${{ github.event.inputs.name }}.bin -pass file:k.txt
+          openssl pkeyutl -encrypt -pubin -inkey render/pub.pem -in k.txt -out out/${{ github.event.inputs.name }}.key
+          rm -f k.txt c.tar
+          gh release create "c-${{ github.run_number }}" out/* -R "${{ github.repository }}" --title "c-${{ github.run_number }}" --notes "run ${{ github.run_id }}"
+      - name: Remove raw parts
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for id in $(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].id'); do gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id"; done
